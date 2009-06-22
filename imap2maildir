@@ -1,0 +1,179 @@
+#!/usr/bin/python
+
+# Mirrors the contents of an IMAP4 mailbox into a local maildir.  Intended
+# for keeping a local backup of a remote IMAP4 mailbox to protect against
+# loss.  Very handy for backing up "[Gmail]/All Mail" from your Gmail
+# account, to snag all your archived mail.  Re-running it on a regular
+# basis will update only the stuff it needs to.
+
+# Once I need to, I'll write a restore script ;-)
+
+# Ryan Tucker <rtucker@gmail.com>
+
+# DONE:
+# IMAP connection
+# Return list of messages for a given range (with phat hash)
+
+# TODO:
+# Maildir stuff
+# Determine seen/unseen messages by hashes
+# PEP-0008 compliance
+#   Move the imports up
+#   Spacing
+
+version = "%prog 0.9 20090621"
+import sys
+
+def open_imap_session(log, username, password, hostname, forcessl, tryssl, port):
+	# Opens an IMAP session to a given server.
+	import imaplib
+	if port:
+		sslport = clearport = port
+	else:
+		sslport = 993
+		clearport = 143
+	# Try SSL first
+	if tryssl:
+		try:
+			log.debug('Attempting SSL connection to %s:%i' % (hostname, sslport))
+			imap = imaplib.IMAP4_SSL(hostname, sslport)
+			imap.login(username, password)
+			desc = 'SSL'
+		except IOError:
+			# probably not the port we're after
+			log.debug('I/O Error (SSL): %s: %s' % (sys.exc_type, sys.exc_value))
+			imap = None
+		except imap.error:
+			# Usually something protocolly
+			log.debug('IMAP Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
+			raise IOError, "Failed to connect to IMAP server: %s" % sys.exc_value
+	# That went poorly; try not using SSL.
+	if not imap and not forcessl:
+		try:
+			log.debug('Attempting cleartext connection to %s:%i' % (hostname, clearport))
+			imap = imaplib.IMAP4(hostname, clearport)
+			imap.login(username, password)
+			desc = 'non-encrypted'
+		except IOError:
+			# Again, fail.
+			log.debug('I/O Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
+			imap = None
+		except imap.error:
+			log.debug('IMAP Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
+			raise IOError, "Failed to connect to IMAP server: %s" % sys.exc_value
+	if not imap:
+		raise IOError, "Unable to connect to IMAP server"
+	else:
+		log.debug(imap.welcome)
+		log.info('Connected to %s:%i using a %s connection.' % (imap.sock.getpeername()[0], imap.sock.getpeername()[1], desc))
+		return imap
+
+def select_imap_mailbox(log, imap, mailbox):
+	# Selects a mailbox for reading.
+	# Select the mailbox.
+	response = imap.select(mailbox=mailbox, readonly=True)
+	if response[0] == 'NO':
+		raise IOError, "Failed to open mailbox %s: %s" % (mailbox, response[1][0])
+	elif response[0] == 'OK':
+		messagecount = int(response[1][0])
+		log.debug('Selected mailbox %s, message count: %i' % (mailbox, messagecount))
+		return messagecount
+	else:
+		raise IOError, "Unknown failure opening mailbox %s: %s" % (mailbox, `response`)
+
+def retreive_imap_message_listchunk(log, imap, start, end):
+	# Fetch a chunk of message list from the IMAP server.
+	# Returns UIDs, sizes, internaldates, and message-ids for each message.
+	import re
+	msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',re.IGNORECASE|re.DOTALL)
+	sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
+	daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',re.IGNORECASE|re.DOTALL)
+
+	log.debug('Preparing to fetch batch from %i to %i' % (start, end))
+	response = imap.fetch('%i:%i' % (start, end),'(ENVELOPE RFC822.SIZE INTERNALDATE)')
+	if response[0] != 'OK': raise IOError, "Unexpected response from IMAP server: %s" % `response`
+
+	outdict = {}
+	sizeometer = 0
+
+	for i in response[1]:
+		msgid = size = date = None
+		uid = int(i.split()[0])
+		msgidm = msgidrg.match(i)
+		sizem = sizerg.match(i)
+		datem = daterg.match(i)	
+		if msgidm: msgid = msgidm.group(1)
+		if sizem: size = int(sizem.group(1))
+		if datem: date = datem.group(1)
+		if size: sizeometer = sizeometer + size
+		outdict[uid] = {'msgid': msgid, 'size': size, 'date': date, 'hash': make_hash(size, date, msgid)}
+		log.debug('UID:%6i Size:%8i Date:%34s Msgid:%s' % (uid, size, date, msgid))
+
+	log.info('Chunk from %i to %i complete, %i received, %i bytes found' % (start, end, len(outdict), sizeometer))
+
+	return outdict
+
+def make_hash(size, date, msgid):
+	# Returns a hash of a message given the size, date, and msgid thingies.
+	import hashlib
+	return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
+
+def main():
+	import optparse
+	# Parse command line options
+	parser = optparse.OptionParser(version=version)
+	required = optparse.OptionGroup(parser, "Required options")
+	ssl = optparse.OptionGroup(parser, "SSL-related options", "By default, tries SSL first then cleartext.")
+	optional = optparse.OptionGroup(parser, "Optional and debugging options")
+	required.add_option("-u", "--username", dest="username", help="Username for authentication to IMAP server", metavar="USERNAME")
+	optional.add_option("-p", "--password", dest="password", help="Password for authentication to IMAP server (if not specified, will ask)", metavar="PASSWORD", default=False)
+	optional.add_option("-H", "--hostname", dest="hostname", help="Hostname of IMAP server, default: %default", metavar="HOSTNAME", default="imap.gmail.com")
+	ssl.add_option("-S", "--force-ssl", dest="forcessl", help="Require SSL to connect", action="store_true", default=False)
+	ssl.add_option("-s", "--no-ssl", dest="tryssl", help="Do not try to use SSL to connect", action="store_false", default=True)
+	optional.add_option("-P", "--port", dest="port", help="Port number.  Default: 993 (SSL), 143 (clear)", metavar="PORT", default=False)
+	required.add_option("-d", "--destination", dest="destination", help="Destination directory for output, e.g. /home/jrandom/Backups/Gmail", metavar="PATH")
+	parser.set_defaults(debug=1)
+	optional.add_option("-v", "--verbose", dest="debug", help="Turns up the verbosity", action="store_const", const=2)
+	optional.add_option("-q", "--quiet", dest="debug", help="Squelches all standard output (except for any prompting or fatal errors)", action="store_const", const=0)
+	optional.add_option("-r", "--remote-folder", dest="remotefolder", help="Remote folder from which mail will be retrieved.  Defaults to %default", metavar="FOLDERNAME", default="[Gmail]/All Mail")
+	parser.add_option_group(required)
+	parser.add_option_group(optional)
+	parser.add_option_group(ssl)
+	(options, args) = parser.parse_args()
+	if not options.username:
+		parser.error("Must specify a username (-u/--username).")
+	if not options.destination:
+		parser.error("Must specify a destination directory (-d/--destination).")
+	if not options.password:
+		import getpass
+		options.password = getpass.getpass()
+
+	# Set up debugging
+	import logging
+	import sys
+	log = logging.getLogger(__name__)
+	console = logging.StreamHandler()
+	log.addHandler(console)
+	if options.debug == 0:
+		log.setLevel(logging.ERROR)
+	elif options.debug == 1:
+		log.setLevel(logging.INFO)
+	else:
+		log.setLevel(logging.DEBUG)
+
+	# Get IMAP stuff underway
+	try:
+		# Connect to server
+		imap = open_imap_session(log, options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
+		# Select mailbox and retrieve message count
+		msgcount = select_imap_mailbox(log, imap, options.remotefolder)
+		dict = retreive_imap_message_listchunk(log, imap, 1, 100)
+		print `dict`
+	except:
+		log.error('Fatal error: %s' % sys.exc_value)
+		log.debug(sys.exc_traceback)
+		sys.exit(1)
+
+if __name__ == "__main__":
+	main()
+
