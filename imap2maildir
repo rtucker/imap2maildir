@@ -26,6 +26,7 @@ import getpass
 import hashlib
 import imaplib
 import logging
+import mailbox
 import optparse
 import os
 import re
@@ -96,12 +97,13 @@ def select_imap_mailbox(imap, mailbox):
 def retreive_imap_message_listchunk(imap, start, end):
 	# Fetch a chunk of message list from the IMAP server.
 	# Returns UIDs, sizes, internaldates, and message-ids for each message.
+	uidrg = re.compile('.*?UID\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
 	msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',re.IGNORECASE|re.DOTALL)
 	sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
 	daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',re.IGNORECASE|re.DOTALL)
 
 	log.debug('Preparing to fetch batch from %i to %i' % (start, end))
-	response = imap.fetch('%i:%i' % (start, end),'(ENVELOPE RFC822.SIZE INTERNALDATE)')
+	response = imap.fetch('%i:%i' % (start, end),'(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
 	if response[0] != 'OK': raise IOError, "Unexpected response from IMAP server: %s" % `response`
 
 	outdict = {}
@@ -109,20 +111,26 @@ def retreive_imap_message_listchunk(imap, start, end):
 
 	for i in response[1]:
 		msgid = size = date = None
-		uid = int(i.split()[0])
+		count = int(i.split()[0])
+		uidm = uidrg.match(i)
 		msgidm = msgidrg.match(i)
 		sizem = sizerg.match(i)
 		datem = daterg.match(i)	
+		if uidm: uid = int(uidm.group(1))
 		if msgidm: msgid = msgidm.group(1)
 		if sizem: size = int(sizem.group(1))
 		if datem: date = datem.group(1)
 		if size: sizeometer = sizeometer + size
 		outdict[uid] = {'msgid': msgid, 'size': size, 'date': date, 'hash': make_hash(size, date, msgid)}
-		log.debug('UID:%6i Size:%8i Date:%34s Msgid:%s' % (uid, size, date, msgid))
+		log.debug('Num:%6i UID:%6i Size:%8i Date:%34s Msgid:%s' % (count, uid, size, date, msgid))
 
 	log.info('Chunk from %i to %i complete, %i received, %i bytes found' % (start, end, len(outdict), sizeometer))
 
 	return outdict
+
+def get_imap_message_by_uid(imap, uid):
+	# Returns a message given an imap instance and a uid.
+	pass
 
 def make_hash(size, date, msgid):
 	# Returns a hash of a message given the size, date, and msgid thingies.
@@ -160,6 +168,11 @@ def store_hash(conn, hash, mailfile):
 	c.execute('insert into seenmessages values (?,?)', (hash, mailfile))
 	conn.commit()
 
+def open_mailbox(directory):
+	# There is a mailbox here.
+	box = mailbox.Maildir(directory)
+	return box
+
 def main():
 	# Parse command line options
 	parser = optparse.OptionParser(version=version)
@@ -177,7 +190,8 @@ def main():
 	optional.add_option("-v", "--verbose", dest="debug", help="Turns up the verbosity", action="store_const", const=2)
 	optional.add_option("-q", "--quiet", dest="debug", help="Squelches all standard output (except for any prompting or fatal errors)", action="store_const", const=0)
 	optional.add_option("-r", "--remote-folder", dest="remotefolder", help="Remote folder from which mail will be retrieved.  Defaults to %default", metavar="FOLDERNAME", default="[Gmail]/All Mail")
-	optional.add_option("-m", "--max-messages", dest="maxmessages", help="Maximum number of messages to process in one go.  Default: %default", metavar="NUM", default=100, type="int")
+	optional.add_option("--range-start", dest="rangestart", help="Start with the NUMth message.  Default: %default", metavar="NUM", default=1, type="int")
+	optional.add_option("--range-end", dest="rangeend", help="End with the NUMth message.  Default: %default", metavar="NUM", default=100, type="int")
 	parser.add_option_group(required)
 	parser.add_option_group(optional)
 	parser.add_option_group(ssl)
@@ -207,7 +221,7 @@ def main():
 	imap = open_imap_session(options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
 	# Select mailbox and retrieve message count
 	msgcount = select_imap_mailbox(imap, options.remotefolder)
-	dict = retreive_imap_message_listchunk(imap, 1, options.maxmessages)
+	dict = retreive_imap_message_listchunk(imap, options.rangestart, options.rangeend)
 	for i in dict.keys():
 		if check_hash(db, dict[i]['hash']):
 			log.debug('SEEN: ' + `i`)
