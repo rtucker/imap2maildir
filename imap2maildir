@@ -18,15 +18,20 @@
 # Maildir stuff
 # Determine seen/unseen messages by hashes
 # PEP-0008 compliance
-#   Move the imports up
 #   Spacing
 
 version = "%prog 0.9 20090621"
+
+import getpass
+import hashlib
+import imaplib
+import logging
+import optparse
+import re
 import sys
 
 def open_imap_session(log, username, password, hostname, forcessl, tryssl, port):
 	# Opens an IMAP session to a given server.
-	import imaplib
 	if port:
 		sslport = clearport = port
 	else:
@@ -84,7 +89,6 @@ def select_imap_mailbox(log, imap, mailbox):
 def retreive_imap_message_listchunk(log, imap, start, end):
 	# Fetch a chunk of message list from the IMAP server.
 	# Returns UIDs, sizes, internaldates, and message-ids for each message.
-	import re
 	msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',re.IGNORECASE|re.DOTALL)
 	sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
 	daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',re.IGNORECASE|re.DOTALL)
@@ -115,11 +119,9 @@ def retreive_imap_message_listchunk(log, imap, start, end):
 
 def make_hash(size, date, msgid):
 	# Returns a hash of a message given the size, date, and msgid thingies.
-	import hashlib
 	return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
 
 def main():
-	import optparse
 	# Parse command line options
 	parser = optparse.OptionParser(version=version)
 	required = optparse.OptionGroup(parser, "Required options")
@@ -145,12 +147,9 @@ def main():
 	if not options.destination:
 		parser.error("Must specify a destination directory (-d/--destination).")
 	if not options.password:
-		import getpass
 		options.password = getpass.getpass()
 
 	# Set up debugging
-	import logging
-	import sys
 	log = logging.getLogger(__name__)
 	console = logging.StreamHandler()
 	log.addHandler(console)
