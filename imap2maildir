@@ -27,7 +27,9 @@ import hashlib
 import imaplib
 import logging
 import optparse
+import os
 import re
+import sqlite3
 import sys
 
 def open_imap_session(log, username, password, hostname, forcessl, tryssl, port):
@@ -121,6 +123,36 @@ def make_hash(size, date, msgid):
 	# Returns a hash of a message given the size, date, and msgid thingies.
 	return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
 
+def open_sql_session(directory):
+	# Opens a SQLite database in the target directory, initializing it if required
+	filename = os.path.join(directory, '.imap2maildir.sqlite')
+	conn = sqlite3.connect(filename)
+	c = conn.cursor()
+	try:
+		# try to grab the contents of a table
+		c.execute('select * from seenmessages limit 1')
+	except sqlite3.OperationalError:
+		# oops, table isn't there.  noob database
+		c.execute("""create table seenmessages (hash text not null unique, mailfile text not null)""")
+	conn.commit()
+	return conn
+
+def check_hash(conn, hash):
+	# Given a database connection and a hash, returns either None or the mailfile name
+	c = conn.cursor()
+	c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+	row = c.fetchone()
+	if row:
+		return row[0]
+	else:
+		return None
+
+def store_hash(conn, hash, mailfile):
+	# Given a database connection, hash, and mailfile, stashes it in the database
+	c = conn.cursor()
+	c.execute('insert into seenmessages values (?,?)', (hash, mailfile))
+	conn.commit()
+
 def main():
 	# Parse command line options
 	parser = optparse.OptionParser(version=version)
@@ -147,6 +179,8 @@ def main():
 		parser.error("Must specify a username (-u/--username).")
 	if not options.destination:
 		parser.error("Must specify a destination directory (-d/--destination).")
+        if not os.path.exists(options.destination):
+                parser.error("Destination directory '%s' does not exist." % options.destination)
 	if not options.password:
 		options.password = getpass.getpass()
 
@@ -161,18 +195,22 @@ def main():
 	else:
 		log.setLevel(logging.DEBUG)
 
+	# Open database
+	db = open_sql_session(options.destination)
+
 	# Get IMAP stuff underway
-	try:
-		# Connect to server
-		imap = open_imap_session(log, options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
-		# Select mailbox and retrieve message count
-		msgcount = select_imap_mailbox(log, imap, options.remotefolder)
-		dict = retreive_imap_message_listchunk(log, imap, 1, options.maxmessages)
-		print `dict`
-	except:
-		log.error('Fatal error: %s' % sys.exc_value)
-		log.debug(sys.exc_traceback)
-		sys.exit(1)
+	# Connect to server
+	imap = open_imap_session(log, options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
+	# Select mailbox and retrieve message count
+	msgcount = select_imap_mailbox(log, imap, options.remotefolder)
+	dict = retreive_imap_message_listchunk(log, imap, 1, options.maxmessages)
+	for i in dict.keys():
+		if check_hash(db, dict[i]['hash']):
+			log.debug('SEEN: ' + `i`)
+		else:
+			# just using msgid for mailfile right now -- eventually this will be the maildir filename
+			store_hash(db, dict[i]['hash'], dict[i]['msgid'])
+			log.debug(' NEW: ' + `i`)
 
 if __name__ == "__main__":
 	main()
