@@ -32,7 +32,12 @@ import re
 import sqlite3
 import sys
 
-def open_imap_session(log, username, password, hostname, forcessl, tryssl, port):
+# Handler for logging/debugging/output
+log = logging.getLogger(__name__)
+console = logging.StreamHandler()
+log.addHandler(console)
+
+def open_imap_session(username, password, hostname, forcessl, tryssl, port):
 	# Opens an IMAP session to a given server.
 	if port:
 		sslport = clearport = port
@@ -75,7 +80,7 @@ def open_imap_session(log, username, password, hostname, forcessl, tryssl, port)
 		log.info('Connected to %s:%i using a %s connection.' % (imap.sock.getpeername()[0], imap.sock.getpeername()[1], desc))
 		return imap
 
-def select_imap_mailbox(log, imap, mailbox):
+def select_imap_mailbox(imap, mailbox):
 	# Selects a mailbox for reading.
 	# Select the mailbox.
 	response = imap.select(mailbox=mailbox, readonly=True)
@@ -88,7 +93,7 @@ def select_imap_mailbox(log, imap, mailbox):
 	else:
 		raise IOError, "Unknown failure opening mailbox %s: %s" % (mailbox, `response`)
 
-def retreive_imap_message_listchunk(log, imap, start, end):
+def retreive_imap_message_listchunk(imap, start, end):
 	# Fetch a chunk of message list from the IMAP server.
 	# Returns UIDs, sizes, internaldates, and message-ids for each message.
 	msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',re.IGNORECASE|re.DOTALL)
@@ -126,6 +131,7 @@ def make_hash(size, date, msgid):
 def open_sql_session(directory):
 	# Opens a SQLite database in the target directory, initializing it if required
 	filename = os.path.join(directory, '.imap2maildir.sqlite')
+	log.debug("Opening sqlite3 database '%s'" % filename)
 	conn = sqlite3.connect(filename)
 	c = conn.cursor()
 	try:
@@ -133,6 +139,7 @@ def open_sql_session(directory):
 		c.execute('select * from seenmessages limit 1')
 	except sqlite3.OperationalError:
 		# oops, table isn't there.  noob database
+		log.info("Initializing message-tracking database (to track seen messages).")
 		c.execute("""create table seenmessages (hash text not null unique, mailfile text not null)""")
 	conn.commit()
 	return conn
@@ -185,9 +192,6 @@ def main():
 		options.password = getpass.getpass()
 
 	# Set up debugging
-	log = logging.getLogger(__name__)
-	console = logging.StreamHandler()
-	log.addHandler(console)
 	if options.debug == 0:
 		log.setLevel(logging.ERROR)
 	elif options.debug == 1:
@@ -200,10 +204,10 @@ def main():
 
 	# Get IMAP stuff underway
 	# Connect to server
-	imap = open_imap_session(log, options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
+	imap = open_imap_session(options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
 	# Select mailbox and retrieve message count
-	msgcount = select_imap_mailbox(log, imap, options.remotefolder)
-	dict = retreive_imap_message_listchunk(log, imap, 1, options.maxmessages)
+	msgcount = select_imap_mailbox(imap, options.remotefolder)
+	dict = retreive_imap_message_listchunk(imap, 1, options.maxmessages)
 	for i in dict.keys():
 		if check_hash(db, dict[i]['hash']):
 			log.debug('SEEN: ' + `i`)
