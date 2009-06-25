@@ -215,7 +215,7 @@ def parse_command_line():
 	optional.add_option("-q", "--quiet", dest="debug", help="Squelches all standard output (except for any prompting or fatal errors)", action="store_const", const=0)
 	optional.add_option("-r", "--remote-folder", dest="remotefolder", help="Remote folder from which mail will be retrieved.  Defaults to %default", metavar="FOLDERNAME", default="[Gmail]/All Mail")
 	optional.add_option("--range-start", dest="rangestart", help="Start with the NUMth message.  Default: %default", metavar="NUM", default=1, type="int")
-	optional.add_option("--range-end", dest="rangeend", help="End with the NUMth message.  Default: %default", metavar="NUM", default=100, type="int")
+	optional.add_option("--range-end", dest="rangeend", help="End with the NUMth message.  Use '0' to select all messages.  Default: %default", metavar="NUM", default=0, type="int")
 	optional.add_option("--create", dest="create", help="If --destination doesn't exist, create it", action="store_true", default=False)
 	parser.add_option_group(required)
 	parser.add_option_group(optional)
@@ -261,7 +261,14 @@ def main():
 	imap = open_imap_session(options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
 	# Select mailbox and retrieve message count
 	msgcount = select_imap_mailbox(imap, options.remotefolder)
-	dict = retreive_imap_message_listchunk(imap, options.rangestart, options.rangeend)
+	# Fetch a message list
+	if options.rangeend == 0:
+		rangeend = msgcount
+	else:
+		rangeend = options.rangeend
+	dict = retreive_imap_message_listchunk(imap, options.rangestart, rangeend)
+	# Start handling messages!
+	handledcount = 0
 	for i in dict.keys():
 		if check_hash(db, dict[i]['hash']):
 			log.debug('SEEN: ' + `i`)
@@ -270,6 +277,9 @@ def main():
 			msgfilename = store_message_in_mailbox(mailbox, message)
 			store_hash(db, dict[i]['hash'], msgfilename)
 			log.debug(' NEW: ' + `i`)
+		handledcount = handledcount + 1
+		if handledcount % 100 == 0:
+			log.info('Processed %i of %i...' % (handledcount, rangeend))
 
 if __name__ == "__main__":
 	main()
