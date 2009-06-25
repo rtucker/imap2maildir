@@ -12,6 +12,7 @@
 
 # TODO:
 # PEP-0008 compliance
+#   - Docstrings
 
 version = "%prog 0.9 20090621"
 
@@ -31,6 +32,7 @@ import sys
 log = logging.getLogger(__name__)
 console = logging.StreamHandler()
 log.addHandler(console)
+
 
 def open_imap_session(username, password, hostname, forcessl, tryssl, port):
     # Opens an IMAP session to a given server.
@@ -81,6 +83,7 @@ def open_imap_session(username, password, hostname, forcessl, tryssl, port):
             % (imap.sock.getpeername()[0], imap.sock.getpeername()[1], desc))
         return imap
 
+
 def select_imap_mailbox(imap, mailbox):
     # Selects a mailbox for reading.
     # Select the mailbox.
@@ -96,6 +99,7 @@ def select_imap_mailbox(imap, mailbox):
     else:
         raise IOError("Attempt to open maildir %s failed: %s"
             % (mailbox, `response`))
+
 
 def retreive_imap_message_listchunk(imap, start, end):
     # Fetch a chunk of message list from the IMAP server.
@@ -140,6 +144,7 @@ def retreive_imap_message_listchunk(imap, start, end):
 
     return outdict
 
+
 def get_imap_message_by_uid(imap, uid):
     # Returns a message given an imap instance and a uid.
     messagetuple = imap.uid('FETCH', '%i' % uid, '(RFC822)')
@@ -158,9 +163,11 @@ def get_imap_message_by_uid(imap, uid):
         log.debug('Got UID %i, Subject: (none)' % (uid))
     return message
 
+
 def make_hash(size, date, msgid):
     # Returns a hash of a message given the size, date, and msgid thingies.
     return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
+
 
 def open_sql_session(directory):
     # Opens a SQLite database in the target directory,
@@ -182,6 +189,7 @@ def open_sql_session(directory):
     conn.commit()
     return conn
 
+
 def check_hash(conn, hash):
     # Given a database connection and a hash, returns either None
     # or the mailfile name
@@ -193,12 +201,14 @@ def check_hash(conn, hash):
     else:
         return None
 
+
 def store_hash(conn, hash, mailfile):
     # Given a database connection, hash, and mailfile,
     # stashes it in the database
     c = conn.cursor()
     c.execute('insert into seenmessages values (?,?)', (hash, mailfile))
     conn.commit()
+
 
 def get_highwatermark(conn):
     # Gets the current high water mark sequence number and uid
@@ -207,21 +217,25 @@ def get_highwatermark(conn):
     (sequence, uid) = c.fetchone()
     return (sequence, uid)
 
+
 def set_highwatermark(conn, sequence, uid):
     # Sets the current high water mark sequence number and uid
     c = conn.cursor()
     c.execute('update highwatermark set sequence=?, uid=?', (sequence, uid))
     conn.commit()
 
+
 def open_mailbox(directory, create=False):
     # There is a mailbox here.
     box = mailbox.Maildir(directory, create=create)
     return box
 
+
 def store_message_in_mailbox(mailbox, message):
     # Chuck a message safely into a mailbox.  Return filename if successful.
     filename = mailbox.add(message)
     return filename
+
 
 def smells_like_maildir(dir):
     # Quick check for the cur/tmp/new folders
@@ -232,37 +246,36 @@ def smells_like_maildir(dir):
     else:
         return False
 
+
 def parse_command_line():
     # Parse command line options
     parser = optparse.OptionParser(version=version)
 
+    # Set up some groups
     required = optparse.OptionGroup(parser, "Required options")
+    optional = optparse.OptionGroup(parser, "Optional and debugging options")
     ssl = optparse.OptionGroup(parser, "SSL-related options",
         "By default, tries SSL first then cleartext.")
-    optional = optparse.OptionGroup(parser, "Optional and debugging options")
 
+    # Set the program defaults
     parser.set_defaults(debug=1, password=False, hostname="imap.gmail.com",
         forcessl=False, tryssl=True, port=False,
         remotefolder="[Gmail]/All Mail", rangestart=0, rangeend=0,
         create=False, maxmessages=500)
 
+    # Define the individual options
     required.add_option("-u", "--username", dest="username",
         help="Username for authentication to IMAP server", metavar="USERNAME")
+    required.add_option("-d", "--destination", dest="destination",
+        help="Destination maildir path, e.g. /home/jrandom/Backups/Gmail",
+        metavar="PATH")
     optional.add_option("-p", "--password", dest="password",
         help="Password for authentication to IMAP server. (will ask if blank)",
         metavar="PASSWORD")
     optional.add_option("-H", "--hostname", dest="hostname",
         help="Hostname of IMAP server, default: %default", metavar="HOSTNAME")
-    ssl.add_option("-S", "--force-ssl", dest="forcessl",
-        help="Require SSL to connect, default: %default", action="store_true")
-    ssl.add_option("-s", "--no-ssl", dest="tryssl",
-        help="Do not try to use SSL to connect, default: will try SSL",
-        action="store_false")
     optional.add_option("-P", "--port", dest="port",
         help="Port number.  Default: 993 (SSL), 143 (clear)", metavar="PORT")
-    required.add_option("-d", "--destination", dest="destination",
-        help="Destination maildir path, e.g. /home/jrandom/Backups/Gmail",
-        metavar="PATH")
     optional.add_option("-v", "--verbose", dest="debug",
         help="Turns up the verbosity", action="store_const", const=2)
     optional.add_option("-q", "--quiet", dest="debug",
@@ -282,11 +295,19 @@ def parse_command_line():
     optional.add_option("-m", "--max-messages", dest="maxmessages",
         help="Max messages to process in one run.  Default: %default",
         metavar="MAX", type="int")
+    ssl.add_option("-S", "--force-ssl", dest="forcessl",
+        help="Require SSL to connect, default: %default", action="store_true")
+    ssl.add_option("-s", "--no-ssl", dest="tryssl",
+        help="Do not try to use SSL to connect, default: will try SSL",
+        action="store_false")
 
+    # Parse
     parser.add_option_group(required)
     parser.add_option_group(optional)
     parser.add_option_group(ssl)
     (options, args) = parser.parse_args()
+
+    # Check for required options
     if not options.username:
         parser.error("Must specify a username (-u/--username).")
     if not options.destination:
