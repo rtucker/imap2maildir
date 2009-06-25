@@ -11,11 +11,7 @@
 # Ryan Tucker <rtucker@gmail.com>
 
 # TODO:
-# Iterate over range of messages properly
-# Ensure it won't blow up on huge mailbox
-# Move the option parsing stuff to its own f'n
 # PEP-0008 compliance
-#   Spacing
 
 version = "%prog 0.9 20090621"
 
@@ -37,307 +33,307 @@ console = logging.StreamHandler()
 log.addHandler(console)
 
 def open_imap_session(username, password, hostname, forcessl, tryssl, port):
-	# Opens an IMAP session to a given server.
-	if port:
-		sslport = clearport = port
-	else:
-		sslport = 993
-		clearport = 143
-	# Try SSL first
-	if tryssl:
-		try:
-			log.debug('Attempting SSL connection to %s:%i' % (hostname, sslport))
-			imap = imaplib.IMAP4_SSL(hostname, sslport)
-			imap.login(username, password)
-			desc = 'SSL'
-		except IOError:
-			# probably not the port we're after
-			log.debug('I/O Error (SSL): %s: %s' % (sys.exc_type, sys.exc_value))
-			imap = None
-		except imap.error:
-			# Usually something protocolly
-			log.debug('IMAP Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
-			raise IOError, "Failed to connect to IMAP server: %s" % sys.exc_value
-	# That went poorly; try not using SSL.
-	if not imap and not forcessl:
-		try:
-			log.debug('Attempting cleartext connection to %s:%i' % (hostname, clearport))
-			imap = imaplib.IMAP4(hostname, clearport)
-			imap.login(username, password)
-			desc = 'non-encrypted'
-		except IOError:
-			# Again, fail.
-			log.debug('I/O Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
-			imap = None
-		except imap.error:
-			log.debug('IMAP Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
-			raise IOError, "Failed to connect to IMAP server: %s" % sys.exc_value
-	if not imap:
-		raise IOError, "Unable to connect to IMAP server"
-	else:
-		log.debug(imap.welcome)
-		log.info('Connected to %s:%i using a %s connection.' % (imap.sock.getpeername()[0], imap.sock.getpeername()[1], desc))
-		return imap
+    # Opens an IMAP session to a given server.
+    if port:
+        sslport = clearport = port
+    else:
+        sslport = 993
+        clearport = 143
+    # Try SSL first
+    if tryssl:
+        try:
+            log.debug('Attempting SSL connection to %s:%i' % (hostname, sslport))
+            imap = imaplib.IMAP4_SSL(hostname, sslport)
+            imap.login(username, password)
+            desc = 'SSL'
+        except IOError:
+            # probably not the port we're after
+            log.debug('I/O Error (SSL): %s: %s' % (sys.exc_type, sys.exc_value))
+            imap = None
+        except imap.error:
+            # Usually something protocolly
+            log.debug('IMAP Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
+            raise IOError, "Failed to connect to IMAP server: %s" % sys.exc_value
+    # That went poorly; try not using SSL.
+    if not imap and not forcessl:
+        try:
+            log.debug('Attempting cleartext connection to %s:%i' % (hostname, clearport))
+            imap = imaplib.IMAP4(hostname, clearport)
+            imap.login(username, password)
+            desc = 'non-encrypted'
+        except IOError:
+            # Again, fail.
+            log.debug('I/O Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
+            imap = None
+        except imap.error:
+            log.debug('IMAP Error (cleartext): %s: %s' % (sys.exc_type, sys.exc_value))
+            raise IOError, "Failed to connect to IMAP server: %s" % sys.exc_value
+    if not imap:
+        raise IOError, "Unable to connect to IMAP server"
+    else:
+        log.debug(imap.welcome)
+        log.info('Connected to %s:%i using a %s connection.' % (imap.sock.getpeername()[0], imap.sock.getpeername()[1], desc))
+        return imap
 
 def select_imap_mailbox(imap, mailbox):
-	# Selects a mailbox for reading.
-	# Select the mailbox.
-	response = imap.select(mailbox=mailbox, readonly=True)
-	if response[0] == 'NO':
-		raise IOError, "Failed to open mailbox %s: %s" % (mailbox, response[1][0])
-	elif response[0] == 'OK':
-		messagecount = int(response[1][0])
-		log.debug('Selected mailbox %s, message count: %i' % (mailbox, messagecount))
-		return messagecount
-	else:
-		raise IOError, "Unknown failure opening mailbox %s: %s" % (mailbox, `response`)
+    # Selects a mailbox for reading.
+    # Select the mailbox.
+    response = imap.select(mailbox=mailbox, readonly=True)
+    if response[0] == 'NO':
+        raise IOError, "Failed to open mailbox %s: %s" % (mailbox, response[1][0])
+    elif response[0] == 'OK':
+        messagecount = int(response[1][0])
+        log.debug('Selected mailbox %s, message count: %i' % (mailbox, messagecount))
+        return messagecount
+    else:
+        raise IOError, "Unknown failure opening mailbox %s: %s" % (mailbox, `response`)
 
 def retreive_imap_message_listchunk(imap, start, end):
-	# Fetch a chunk of message list from the IMAP server.
-	# Returns UIDs, sizes, internaldates, and message-ids for each message.
-	uidrg = re.compile('.*?UID\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
-	msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',re.IGNORECASE|re.DOTALL)
-	sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
-	daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',re.IGNORECASE|re.DOTALL)
+    # Fetch a chunk of message list from the IMAP server.
+    # Returns UIDs, sizes, internaldates, and message-ids for each message.
+    uidrg = re.compile('.*?UID\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
+    msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',re.IGNORECASE|re.DOTALL)
+    sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
+    daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',re.IGNORECASE|re.DOTALL)
 
-	log.debug('Preparing to fetch batch from %i to %i' % (start, end))
-	if start == end:
-		rangename = '%i' % start
-	else:
-		rangename = '%i:%i' % (start, end)
-	response = imap.fetch('%s' % (rangename),'(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
-	if response[0] != 'OK': raise IOError, "Unexpected response from IMAP server: %s" % `response`
+    log.debug('Preparing to fetch batch from %i to %i' % (start, end))
+    if start == end:
+        rangename = '%i' % start
+    else:
+        rangename = '%i:%i' % (start, end)
+    response = imap.fetch('%s' % (rangename),'(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
+    if response[0] != 'OK': raise IOError, "Unexpected response from IMAP server: %s" % `response`
 
-	outdict = {}
-	sizeometer = 0
+    outdict = {}
+    sizeometer = 0
 
-	for i in response[1]:
-		msgid = size = date = None
-		count = int(i.split()[0])
-		uidm = uidrg.match(i)
-		msgidm = msgidrg.match(i)
-		sizem = sizerg.match(i)
-		datem = daterg.match(i)	
-		if uidm: uid = int(uidm.group(1))
-		if msgidm: msgid = msgidm.group(1)
-		if sizem: size = int(sizem.group(1))
-		if datem: date = datem.group(1)
-		if size: sizeometer = sizeometer + size
-		outdict[uid] = {'msgid': msgid, 'size': size, 'date': date, 'hash': make_hash(size, date, msgid), 'sequence': count}
-		log.debug('Num:%6i UID:%6i Size:%8i Date:%34s Msgid:%s' % (count, uid, size, date, msgid))
+    for i in response[1]:
+        msgid = size = date = None
+        count = int(i.split()[0])
+        uidm = uidrg.match(i)
+        msgidm = msgidrg.match(i)
+        sizem = sizerg.match(i)
+        datem = daterg.match(i)    
+        if uidm: uid = int(uidm.group(1))
+        if msgidm: msgid = msgidm.group(1)
+        if sizem: size = int(sizem.group(1))
+        if datem: date = datem.group(1)
+        if size: sizeometer = sizeometer + size
+        outdict[uid] = {'msgid': msgid, 'size': size, 'date': date, 'hash': make_hash(size, date, msgid), 'sequence': count}
+        log.debug('Num:%6i UID:%6i Size:%8i Date:%34s Msgid:%s' % (count, uid, size, date, msgid))
 
-	log.debug('List from %i to %i complete, %i received, %i bytes found' % (start, end, len(outdict), sizeometer))
+    log.debug('List from %i to %i complete, %i received, %i bytes found' % (start, end, len(outdict), sizeometer))
 
-	return outdict
+    return outdict
 
 def get_imap_message_by_uid(imap, uid):
-	# Returns a message given an imap instance and a uid.
-	messagetuple = imap.uid('FETCH', '%i' % uid, '(RFC822)')
-	if messagetuple[0] != 'OK':
-		raise IOError, 'Failed to fetch message: %s' % `messagetuple[1]`
-	else:
-		if messagetuple[1]:
-			messagemeat = messagetuple[1][0][1]
-		else:
-			return None
-	# We now have an RFC822-formatted message in messagemeat!
-	message = email.message_from_string(messagemeat)
-	if 'subject' in message:
-		log.debug('Got UID %i, Subject: %s' % (uid, message['subject']))
-	else:
-		log.debug('Got UID %i, Subject: (none)' % (uid))
-	return message
+    # Returns a message given an imap instance and a uid.
+    messagetuple = imap.uid('FETCH', '%i' % uid, '(RFC822)')
+    if messagetuple[0] != 'OK':
+        raise IOError, 'Failed to fetch message: %s' % `messagetuple[1]`
+    else:
+        if messagetuple[1]:
+            messagemeat = messagetuple[1][0][1]
+        else:
+            return None
+    # We now have an RFC822-formatted message in messagemeat!
+    message = email.message_from_string(messagemeat)
+    if 'subject' in message:
+        log.debug('Got UID %i, Subject: %s' % (uid, message['subject']))
+    else:
+        log.debug('Got UID %i, Subject: (none)' % (uid))
+    return message
 
 def make_hash(size, date, msgid):
-	# Returns a hash of a message given the size, date, and msgid thingies.
-	return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
+    # Returns a hash of a message given the size, date, and msgid thingies.
+    return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
 
 def open_sql_session(directory):
-	# Opens a SQLite database in the target directory, initializing it if required
-	filename = os.path.join(directory, '.imap2maildir.sqlite')
-	log.debug("Opening sqlite3 database '%s'" % filename)
-	conn = sqlite3.connect(filename)
-	c = conn.cursor()
-	try:
-		# try to grab the contents of a table
-		c.execute('select * from seenmessages limit 1')
-	except sqlite3.OperationalError:
-		# oops, table isn't there.  noob database
-		log.info("Initializing message-tracking database (to track seen messages).")
-		c.execute("""create table seenmessages (hash text not null unique, mailfile text not null)""")
-		c.execute("""create table highwatermark (sequence int, uid int)""")
-		c.execute('insert into highwatermark values (0, 0)')
-	conn.commit()
-	return conn
+    # Opens a SQLite database in the target directory, initializing it if required
+    filename = os.path.join(directory, '.imap2maildir.sqlite')
+    log.debug("Opening sqlite3 database '%s'" % filename)
+    conn = sqlite3.connect(filename)
+    c = conn.cursor()
+    try:
+        # try to grab the contents of a table
+        c.execute('select * from seenmessages limit 1')
+    except sqlite3.OperationalError:
+        # oops, table isn't there.  noob database
+        log.info("Initializing message-tracking database (to track seen messages).")
+        c.execute("""create table seenmessages (hash text not null unique, mailfile text not null)""")
+        c.execute("""create table highwatermark (sequence int, uid int)""")
+        c.execute('insert into highwatermark values (0, 0)')
+    conn.commit()
+    return conn
 
 def check_hash(conn, hash):
-	# Given a database connection and a hash, returns either None or the mailfile name
-	c = conn.cursor()
-	c.execute('select mailfile from seenmessages where hash=?', (hash, ))
-	row = c.fetchone()
-	if row:
-		return row[0]
-	else:
-		return None
+    # Given a database connection and a hash, returns either None or the mailfile name
+    c = conn.cursor()
+    c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+    row = c.fetchone()
+    if row:
+        return row[0]
+    else:
+        return None
 
 def store_hash(conn, hash, mailfile):
-	# Given a database connection, hash, and mailfile, stashes it in the database
-	c = conn.cursor()
-	c.execute('insert into seenmessages values (?,?)', (hash, mailfile))
-	conn.commit()
+    # Given a database connection, hash, and mailfile, stashes it in the database
+    c = conn.cursor()
+    c.execute('insert into seenmessages values (?,?)', (hash, mailfile))
+    conn.commit()
 
 def get_highwatermark(conn):
-	# Gets the current high water mark sequence number and uid
-	c = conn.cursor()
-	c.execute('select sequence, uid from highwatermark')
-	(sequence, uid) = c.fetchone()
-	return (sequence, uid)
+    # Gets the current high water mark sequence number and uid
+    c = conn.cursor()
+    c.execute('select sequence, uid from highwatermark')
+    (sequence, uid) = c.fetchone()
+    return (sequence, uid)
 
 def set_highwatermark(conn, sequence, uid):
-	# Sets the current high water mark sequence number and uid
-	c = conn.cursor()
-	c.execute('update highwatermark set sequence=?, uid=?', (sequence, uid))
-	conn.commit()
+    # Sets the current high water mark sequence number and uid
+    c = conn.cursor()
+    c.execute('update highwatermark set sequence=?, uid=?', (sequence, uid))
+    conn.commit()
 
 def open_mailbox(directory, create=False):
-	# There is a mailbox here.
-	box = mailbox.Maildir(directory, create=create)
-	return box
+    # There is a mailbox here.
+    box = mailbox.Maildir(directory, create=create)
+    return box
 
 def store_message_in_mailbox(mailbox, message):
-	# Chuck a message safely into a mailbox.  Return filename if successful.
-	filename = mailbox.add(message)
-	return filename
+    # Chuck a message safely into a mailbox.  Return filename if successful.
+    filename = mailbox.add(message)
+    return filename
 
 def smells_like_maildir(dir):
-	# Quick check for the cur/tmp/new folders
-	if os.path.exists(os.path.join(dir, 'cur')) and os.path.exists(os.path.join(dir, 'new')) and os.path.exists(os.path.join(dir, 'tmp')):
-		return True
-	else:
-		return False
+    # Quick check for the cur/tmp/new folders
+    if os.path.exists(os.path.join(dir, 'cur')) and os.path.exists(os.path.join(dir, 'new')) and os.path.exists(os.path.join(dir, 'tmp')):
+        return True
+    else:
+        return False
 
 def parse_command_line():
-	# Parse command line options
-	parser = optparse.OptionParser(version=version)
-	required = optparse.OptionGroup(parser, "Required options")
-	ssl = optparse.OptionGroup(parser, "SSL-related options", "By default, tries SSL first then cleartext.")
-	optional = optparse.OptionGroup(parser, "Optional and debugging options")
-	required.add_option("-u", "--username", dest="username", help="Username for authentication to IMAP server", metavar="USERNAME")
-	optional.add_option("-p", "--password", dest="password", help="Password for authentication to IMAP server (if not specified, will ask)", metavar="PASSWORD", default=False)
-	optional.add_option("-H", "--hostname", dest="hostname", help="Hostname of IMAP server, default: %default", metavar="HOSTNAME", default="imap.gmail.com")
-	ssl.add_option("-S", "--force-ssl", dest="forcessl", help="Require SSL to connect", action="store_true", default=False)
-	ssl.add_option("-s", "--no-ssl", dest="tryssl", help="Do not try to use SSL to connect", action="store_false", default=True)
-	optional.add_option("-P", "--port", dest="port", help="Port number.  Default: 993 (SSL), 143 (clear)", metavar="PORT", default=False)
-	required.add_option("-d", "--destination", dest="destination", help="Destination directory for output, e.g. /home/jrandom/Backups/Gmail", metavar="PATH")
-	parser.set_defaults(debug=1)
-	optional.add_option("-v", "--verbose", dest="debug", help="Turns up the verbosity", action="store_const", const=2)
-	optional.add_option("-q", "--quiet", dest="debug", help="Squelches all standard output (except for any prompting or fatal errors)", action="store_const", const=0)
-	optional.add_option("-r", "--remote-folder", dest="remotefolder", help="Remote folder from which mail will be retrieved.  Defaults to %default", metavar="FOLDERNAME", default="[Gmail]/All Mail")
-	optional.add_option("--range-start", dest="rangestart", help="Start with the NUMth message.  Use '0' to specify high water mark from previous run.  Default: %default", metavar="NUM", default=0, type="int")
-	optional.add_option("--range-end", dest="rangeend", help="End with the NUMth message.  Use '0' to select all messages.  Default: %default", metavar="NUM", default=0, type="int")
-	optional.add_option("--create", dest="create", help="If --destination doesn't exist, create it", action="store_true", default=False)
-	optional.add_option("-m", "--max-messages", dest="maxmessages", help="Maximum number of messages to process in one run.  Anything beyond this will be saved until next time.  Default: %default", metavar="MAX", default=500, type="int")
-	parser.add_option_group(required)
-	parser.add_option_group(optional)
-	parser.add_option_group(ssl)
-	(options, args) = parser.parse_args()
-	if not options.username:
-		parser.error("Must specify a username (-u/--username).")
-	if not options.destination:
-		parser.error("Must specify a destination directory (-d/--destination).")
-        if not os.path.exists(options.destination):
-		if options.create:
-			pass
-		else:
-                	parser.error("Destination directory '%s' does not exist.  Use --create to create." % options.destination)
-	else:
-		if not smells_like_maildir(options.destination):
-			parser.error("Destination directory '%s' exists, but it doesn't look like a maildir." % options.destination)
-	if not options.password:
-		options.password = getpass.getpass()
+    # Parse command line options
+    parser = optparse.OptionParser(version=version)
+    required = optparse.OptionGroup(parser, "Required options")
+    ssl = optparse.OptionGroup(parser, "SSL-related options", "By default, tries SSL first then cleartext.")
+    optional = optparse.OptionGroup(parser, "Optional and debugging options")
+    required.add_option("-u", "--username", dest="username", help="Username for authentication to IMAP server", metavar="USERNAME")
+    optional.add_option("-p", "--password", dest="password", help="Password for authentication to IMAP server (if not specified, will ask)", metavar="PASSWORD", default=False)
+    optional.add_option("-H", "--hostname", dest="hostname", help="Hostname of IMAP server, default: %default", metavar="HOSTNAME", default="imap.gmail.com")
+    ssl.add_option("-S", "--force-ssl", dest="forcessl", help="Require SSL to connect", action="store_true", default=False)
+    ssl.add_option("-s", "--no-ssl", dest="tryssl", help="Do not try to use SSL to connect", action="store_false", default=True)
+    optional.add_option("-P", "--port", dest="port", help="Port number.  Default: 993 (SSL), 143 (clear)", metavar="PORT", default=False)
+    required.add_option("-d", "--destination", dest="destination", help="Destination directory for output, e.g. /home/jrandom/Backups/Gmail", metavar="PATH")
+    parser.set_defaults(debug=1)
+    optional.add_option("-v", "--verbose", dest="debug", help="Turns up the verbosity", action="store_const", const=2)
+    optional.add_option("-q", "--quiet", dest="debug", help="Squelches all standard output (except for any prompting or fatal errors)", action="store_const", const=0)
+    optional.add_option("-r", "--remote-folder", dest="remotefolder", help="Remote folder from which mail will be retrieved.  Defaults to %default", metavar="FOLDERNAME", default="[Gmail]/All Mail")
+    optional.add_option("--range-start", dest="rangestart", help="Start with the NUMth message.  Use '0' to specify high water mark from previous run.  Default: %default", metavar="NUM", default=0, type="int")
+    optional.add_option("--range-end", dest="rangeend", help="End with the NUMth message.  Use '0' to select all messages.  Default: %default", metavar="NUM", default=0, type="int")
+    optional.add_option("--create", dest="create", help="If --destination doesn't exist, create it", action="store_true", default=False)
+    optional.add_option("-m", "--max-messages", dest="maxmessages", help="Maximum number of messages to process in one run.  Anything beyond this will be saved until next time.  Default: %default", metavar="MAX", default=500, type="int")
+    parser.add_option_group(required)
+    parser.add_option_group(optional)
+    parser.add_option_group(ssl)
+    (options, args) = parser.parse_args()
+    if not options.username:
+        parser.error("Must specify a username (-u/--username).")
+    if not options.destination:
+        parser.error("Must specify a destination directory (-d/--destination).")
+    if not os.path.exists(options.destination):
+        if options.create:
+            pass
+        else:
+            parser.error("Destination directory '%s' does not exist.  Use --create to create." % options.destination)
+    else:
+        if not smells_like_maildir(options.destination):
+            parser.error("Destination directory '%s' exists, but it doesn't look like a maildir." % options.destination)
+    if not options.password:
+        options.password = getpass.getpass()
 
-	# Set up debugging
-	if options.debug == 0:
-		log.setLevel(logging.ERROR)
-	elif options.debug == 1:
-		log.setLevel(logging.INFO)
-	else:
-		log.setLevel(logging.DEBUG)
+    # Set up debugging
+    if options.debug == 0:
+        log.setLevel(logging.ERROR)
+    elif options.debug == 1:
+        log.setLevel(logging.INFO)
+    else:
+        log.setLevel(logging.DEBUG)
 
-	return options
+    return options
 
 def main():
-	# Parse the command line
-	options = parse_command_line()
+    # Parse the command line
+    options = parse_command_line()
 
-	# Open maildir
-	mailbox = open_mailbox(options.destination, options.create)
+    # Open maildir
+    mailbox = open_mailbox(options.destination, options.create)
 
-	# Open database (do this after opening maildir)
-	db = open_sql_session(options.destination)
+    # Open database (do this after opening maildir)
+    db = open_sql_session(options.destination)
 
-	# Get IMAP stuff underway
-	# Connect to server
-	imap = open_imap_session(options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
-	# Select mailbox and retrieve message count
-	msgcount = select_imap_mailbox(imap, options.remotefolder)
-	# Figure out the highest message we've seen so far
-	if options.rangestart == 0:
-		hwmsequence, hwmuid = get_highwatermark(db)
-		if hwmsequence == 0:
-			log.debug('First run, assuming high water mark is 1.')
-			rangestart = 1
-		else:
-			hwmactualuid = retreive_imap_message_listchunk(imap, hwmsequence, hwmsequence).keys()[0]
-			if hwmactualuid == hwmuid:
-				# High water mark data still valid, hooray
-				log.debug('High water mark from last run: sequence %i.' % hwmsequence)
-				rangestart = hwmsequence
-			else:
-				# High water mark data invalid
-				log.debug('High water mark was sequence %i; expecting uid %i, got uid %i.  Restarting.' % (hwmsequence, hwmuid, hwmactualuid))
-				rangestart = 1
-	else:
-		rangestart = options.rangestart
-	# Set the range end too
-	if options.rangeend == 0:
-		rangeend = options.maxmessages + rangestart
-		maxmsgs = options.maxmessages
-	else:
-		rangeend = options.rangeend
-		maxmsgs = rangeend - rangestart
+    # Get IMAP stuff underway
+    # Connect to server
+    imap = open_imap_session(options.username, options.password, options.hostname, options.forcessl, options.tryssl, options.port)
+    # Select mailbox and retrieve message count
+    msgcount = select_imap_mailbox(imap, options.remotefolder)
+    # Figure out the highest message we've seen so far
+    if options.rangestart == 0:
+        hwmsequence, hwmuid = get_highwatermark(db)
+        if hwmsequence == 0:
+            log.debug('First run, assuming high water mark is 1.')
+            rangestart = 1
+        else:
+            hwmactualuid = retreive_imap_message_listchunk(imap, hwmsequence, hwmsequence).keys()[0]
+            if hwmactualuid == hwmuid:
+                # High water mark data still valid, hooray
+                log.debug('High water mark from last run: sequence %i.' % hwmsequence)
+                rangestart = hwmsequence
+            else:
+                # High water mark data invalid
+                log.debug('High water mark was sequence %i; expecting uid %i, got uid %i.  Restarting.' % (hwmsequence, hwmuid, hwmactualuid))
+                rangestart = 1
+    else:
+        rangestart = options.rangestart
+    # Set the range end too
+    if options.rangeend == 0:
+        rangeend = options.maxmessages + rangestart
+        maxmsgs = options.maxmessages
+    else:
+        rangeend = options.rangeend
+        maxmsgs = rangeend - rangestart
 
-	# Verify some sanity...
-	if rangestart > rangeend:
-		raise ValueError, 'Range start of %i greater than range end of %i' % (rangestart, rangeend)
+    # Verify some sanity...
+    if rangestart > rangeend:
+        raise ValueError, 'Range start of %i greater than range end of %i' % (rangestart, rangeend)
 
-	# Get the pile!
-	log.info('Retrieving messages from %i to %i...' % (rangestart, rangeend))
-	dict = retreive_imap_message_listchunk(imap, rangestart, rangeend)
-	# Start handling messages!
-	handledcount = 0
-	uidlist = dict.keys()
-	uidlist.sort()
-	for i in uidlist:
-		if check_hash(db, dict[i]['hash']):
-			log.debug('SEEN: ' + `i`)
-		else:
-			message = get_imap_message_by_uid(imap, i)
-			msgfilename = store_message_in_mailbox(mailbox, message)
-			store_hash(db, dict[i]['hash'], msgfilename)
-			log.debug(' NEW: ' + `i`)
-		handledcount = handledcount + 1
-		mostrecent = (dict[i]['sequence'], i)
-		if handledcount % 100 == 0:
-			log.info('Processed %i of %i (seq %i, uid %i)...' % (handledcount, maxmsgs, mostrecent[0], mostrecent[1]))
+    # Get the pile!
+    log.info('Retrieving messages from %i to %i...' % (rangestart, rangeend))
+    dict = retreive_imap_message_listchunk(imap, rangestart, rangeend)
+    # Start handling messages!
+    handledcount = 0
+    uidlist = dict.keys()
+    uidlist.sort()
+    for i in uidlist:
+        if check_hash(db, dict[i]['hash']):
+            log.debug('SEEN: ' + `i`)
+        else:
+            message = get_imap_message_by_uid(imap, i)
+            msgfilename = store_message_in_mailbox(mailbox, message)
+            store_hash(db, dict[i]['hash'], msgfilename)
+            log.debug(' NEW: ' + `i`)
+        handledcount = handledcount + 1
+        mostrecent = (dict[i]['sequence'], i)
+        if handledcount % 100 == 0:
+            log.info('Processed %i of %i (seq %i, uid %i)...' % (handledcount, maxmsgs, mostrecent[0], mostrecent[1]))
 
-	# And we're done.
-	if options.rangestart > 1:
-		log.debug('Not setting high water mark: user-specified range start > 1')
-	else:
-		set_highwatermark(db, mostrecent[0], mostrecent[1])
-	log.info('FINISHED: Sequence %i, UID %i, total processed: %i' % (mostrecent[0], mostrecent[1], handledcount))
+    # And we're done.
+    if options.rangestart > 1:
+        log.debug('Not setting high water mark: user-specified range start > 1')
+    else:
+        set_highwatermark(db, mostrecent[0], mostrecent[1])
+    log.info('FINISHED: Sequence %i, UID %i, total processed: %i' % (mostrecent[0], mostrecent[1], handledcount))
 
 if __name__ == "__main__":
-	main()
+    main()
 
