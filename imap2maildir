@@ -13,6 +13,7 @@
 # TODO:
 # Iterate over range of messages properly
 # Ensure it won't blow up on huge mailbox
+# Move the option parsing stuff to its own f'n
 # PEP-0008 compliance
 #   Spacing
 
@@ -196,7 +197,7 @@ def smells_like_maildir(dir):
 	else:
 		return False
 
-def main():
+def parse_command_line():
 	# Parse command line options
 	parser = optparse.OptionParser(version=version)
 	required = optparse.OptionGroup(parser, "Required options")
@@ -242,6 +243,12 @@ def main():
 		log.setLevel(logging.INFO)
 	else:
 		log.setLevel(logging.DEBUG)
+
+	return options
+
+def main():
+	# Parse the command line
+	options = parse_command_line()
 
 	# Open maildir
 	mailbox = open_mailbox(options.destination, options.create)
