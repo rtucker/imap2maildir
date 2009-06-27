@@ -1,0 +1,9 @@
+# Some reasonable default files to ignore.
+# .pyc and .pyo: Python stuff
+*.pyc
+*.pyo
+# Tilde files: backups from editors
+*~
+# *.conf: configuration files, except example.conf
+*.conf
+!example.conf
