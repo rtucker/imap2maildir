@@ -14,8 +14,9 @@
 # PEP-0008 compliance
 #   - Docstrings
 
-version = "%prog 0.9 20090621"
+version = "%prog 0.99 20090628"
 
+import ConfigParser
 import email
 import getpass
 import hashlib
@@ -33,6 +34,21 @@ log = logging.getLogger(__name__)
 console = logging.StreamHandler()
 log.addHandler(console)
 
+# Some reasonable application defaults
+defaults = {
+            'debug': 1,
+            'password': False,
+            'hostname': 'imap.gmail.com',
+            'forcessl': False,
+            'tryssl': True,
+            'port': False,
+            'remotefolder': '[Gmail]/All Mail',
+            'rangestart': 0,
+            'rangeend': 0,
+            'create': False,
+            'maxmessages': 500,
+            'configfile': 'imap2maildir.conf'
+            }
 
 def open_imap_session(username, password, hostname, forcessl, tryssl, port):
     # Opens an IMAP session to a given server.
@@ -247,9 +263,75 @@ def smells_like_maildir(dir):
         return False
 
 
-def parse_command_line():
+def parse_config_file(defaults,configfile='imap2maildir.conf'):
+    # Parse config file, if exists.
+    # Returns a tuple with a ConfigParser instance and either True or
+    # False, depending on whether the config was read...
+    config = ConfigParser.ConfigParser(defaults)
+    if config.read(configfile):
+        log.debug('Reading config from ' + configfile)
+        return (config, True)
+    else:
+        log.debug('No config found at ' + configfile)
+        return (config, False)
+
+
+class FirstOptionParser(optparse.OptionParser):
+    # Adjusts parse_args so it won't complain too heavily about
+    # options that don't exist.
+    # Lifted lock, stock, and barrel from /usr/lib/python2.6/optparse.py
+    def parse_args(self, args=None, values=None):
+        """
+        parse_args(args : [string] = sys.argv[1:],
+                   values : Values = None)
+        -> (values : Values, args : [string])
+
+        Parse the command-line options found in 'args' (default:
+        sys.argv[1:]).  Any errors result in a call to 'error()', which
+        by default prints the usage message to stderr and calls
+        sys.exit() with an error message.  On success returns a pair
+        (values, args) where 'values' is an Values instance (with all
+        your option values) and 'args' is the list of arguments left
+        over after parsing options.
+        """
+        rargs = self._get_args(args)
+        if values is None:
+            values = self.get_default_values()
+        self.rargs = rargs
+        self.largs = largs = []
+        self.values = values
+
+        try:
+            stop = self._process_args(largs, rargs, values)
+        except optparse.BadOptionError:
+            pass
+        except (optparse.OptionValueError), err:
+            self.error(str(err))
+
+        args = largs + rargs
+        return self.check_values(values, args)
+
+def parse_options(defaults):
+    # First round of command line parsing: look for a -c option.
+    firstparser = FirstOptionParser(add_help_option=False)
+    firstparser.set_defaults(configfile=defaults['configfile'])
+    firstparser.add_option("-c", "--config-file", dest="configfile")
+    (firstoptions, firstargs) = firstparser.parse_args()
+    
+    # Parse a config file
+    (parsedconfig, gotconfig) = parse_config_file(
+        defaults, configfile=firstoptions.configfile)
+
     # Parse command line options
-    parser = optparse.OptionParser(version=version)
+    usage = "usage: %prog [options]"
+    description = "A script to copy a remote IMAP folder to a local maildir \
+        storage area.  Ideal for incremental backups of mail from free \
+        webmail providers, or perhaps as an alternative for fetchmail."
+    if gotconfig:
+        description = description + '\n\nConfiguration defaults read from \
+            file "%s"' % firstoptions.configfile
+    parser = optparse.OptionParser(usage=usage, version=version,
+        description=description)
 
     # Set up some groups
     required = optparse.OptionGroup(parser, "Required options")
@@ -257,11 +339,18 @@ def parse_command_line():
     ssl = optparse.OptionGroup(parser, "SSL-related options",
         "By default, tries SSL first then cleartext.")
 
-    # Set the program defaults
-    parser.set_defaults(debug=1, password=False, hostname="imap.gmail.com",
-        forcessl=False, tryssl=True, port=False,
-        remotefolder="[Gmail]/All Mail", rangestart=0, rangeend=0,
-        create=False, maxmessages=500)
+    # Set the defaults...
+    if gotconfig: sectionname = 'imap2maildir'
+    else: sectionname = 'DEFAULT'
+    clist = parsedconfig.items(sectionname, raw=True)
+    for i in clist:
+        iname = i[0]
+        if i[1] == 'False': ivalue = False
+        elif i[1] == 'True': ivalue = True
+        elif i[0] in ['port', 'debug', 'rangestart', 'rangeend',
+            'maxmessages']: ivalue = int(i[1])
+        else: ivalue = i[1]
+        parser.set_default(iname, ivalue)
 
     # Define the individual options
     required.add_option("-u", "--username", dest="username",
@@ -295,6 +384,8 @@ def parse_command_line():
     optional.add_option("-m", "--max-messages", dest="maxmessages",
         help="Max messages to process in one run.  Default: %default",
         metavar="MAX", type="int")
+    optional.add_option("-c", "--config-file", dest="configfile",
+        help="Configuration file to use.  Default: %default")
     ssl.add_option("-S", "--force-ssl", dest="forcessl",
         help="Require SSL to connect, default: %default", action="store_true")
     ssl.add_option("-s", "--no-ssl", dest="tryssl",
@@ -335,9 +426,11 @@ def parse_command_line():
 
     return options
 
+
 def main():
-    # Parse the command line
-    options = parse_command_line()
+    log.debug('Hello.  Version %s' % version)
+    # Parse the command line and config file
+    options = parse_options(defaults)
 
     # Open maildir
     mailbox = open_mailbox(options.destination, options.create)
