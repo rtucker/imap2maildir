@@ -46,7 +46,7 @@ defaults = {
             'rangestart': 0,
             'rangeend': 0,
             'create': False,
-            'maxmessages': 500,
+            'maxmessages': 1000,
             'configfile': 'imap2maildir.conf'
             }
 
