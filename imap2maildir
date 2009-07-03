@@ -301,15 +301,19 @@ class FirstOptionParser(optparse.OptionParser):
         self.largs = largs = []
         self.values = values
 
-        try:
-            stop = self._process_args(largs, rargs, values)
-        except optparse.BadOptionError:
-            pass
-        except (optparse.OptionValueError), err:
-            self.error(str(err))
+        while 1:
+            try:
+                stop = self._process_args(largs, rargs, values)
+                break
+            except optparse.BadOptionError:
+                # Just a bad option, let's try this again
+                pass
+            except (optparse.OptionValueError), err:
+                self.error(str(err))
 
         args = largs + rargs
         return self.check_values(values, args)
+
 
 def parse_options(defaults):
     # First round of command line parsing: look for a -c option.
