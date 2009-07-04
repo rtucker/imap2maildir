@@ -1,2 +1,68 @@
-Placeholder file for when I actually do something!
+imap2maildir: a tool for mirroring an IMAP mailbox to a maildir.
+Ryan Tucker <rtucker@gmail.com>, July 4, 2009
+See COPYRIGHT for your rights, http://github.com/rtucker/imap2maildir/ for info
+
+Usage: imap2maildir [options]
+
+A script to copy a remote IMAP folder to a local maildir         storage area.
+Ideal for incremental backups of mail from free         webmail providers, or
+perhaps as an alternative for fetchmail.
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+
+  Required options:
+    -u USERNAME, --username=USERNAME
+                        Username for authentication to IMAP server
+    -d PATH, --destination=PATH
+                        Destination maildir path, e.g.
+                        /home/jrandom/Backups/Gmail
+
+  Optional and debugging options:
+    -p PASSWORD, --password=PASSWORD
+                        Password for authentication to IMAP server. (will ask
+                        if blank)
+    -H HOSTNAME, --hostname=HOSTNAME
+                        Hostname of IMAP server, default: imap.gmail.com
+    -P PORT, --port=PORT
+                        Port number.  Default: 993 (SSL), 143 (clear)
+    -v, --verbose       Turns up the verbosity
+    -q, --quiet         Squelches all standard output (except prompts and
+                        errors)
+    -r FOLDERNAME, --remote-folder=FOLDERNAME
+                        Remote IMAP folder to retrieve.  Defaults to
+                        [Gmail]/All Mail
+    --range-start=NUM   Start with sequence NUM (0=high water mark).  Default:
+                        0
+    --range-end=NUM     End with sequence NUM (0=all messages).  Default: 0
+    --create            If --destination doesn't exist, create it
+    -m MAX, --max-messages=MAX
+                        Max messages to process in one run.  Default: 1000
+    -c CONFIGFILE, --config-file=CONFIGFILE
+                        Configuration file to use.  Default: imap2maildir.conf
+
+  SSL-related options:
+    By default, tries SSL first then cleartext.
+
+    -S, --force-ssl     Require SSL to connect, default: False
+    -s, --no-ssl        Do not try to use SSL to connect, default: will try
+                        SSL
+
+COMMAND LINE EXAMPLES
+ $ imap2maildir -u bob@yourplace.com -d /home/bob/backups/mail --create
+   Prompts you for bob@yourplace.com's password, uses the default mail server.
+ $ imap2maildir -c blarf.conf
+   Uses the configuration from blarf.conf
+ $ imap2maildir -c something.conf -m 5000
+   Uses the something.conf configuration, except with the max messages set to
+   5000.
+
+PROBLEMS/COMPLAINTS/SUGGESTIONS
+Please use the github issue tracker at:
+http://github.com/rtucker/imap2maildir/issues
+
+MORE INFO
+You can download the latest pile of poop at:
+http://github.com/rtucker/imap2maildir/
 
