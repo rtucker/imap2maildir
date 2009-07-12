@@ -47,11 +47,9 @@ defaults = {
             'rangeend': 0,
             'create': False,
             'maxmessages': 1000,
-            'configfile': 'imap2maildir.conf'
+            'configfile': 'imap2maildir.conf',
+            'chunking': False
             }
-
-# Use old chunking method?
-chunking = False
 
 def open_imap_session(username, password, hostname, forcessl, tryssl, port):
     # Opens an IMAP session to a given server.
@@ -393,6 +391,9 @@ def parse_options(defaults):
         metavar="MAX", type="int")
     optional.add_option("-c", "--config-file", dest="configfile",
         help="Configuration file to use.  Default: %default")
+    optional.add_option("-C", "--chunking", dest="chunking",
+        action="store_true",
+        help="Enable chunking FETCH mode.  Default: %default")
     ssl.add_option("-S", "--force-ssl", dest="forcessl",
         help="Require SSL to connect, default: %default", action="store_true")
     ssl.add_option("-s", "--no-ssl", dest="tryssl",
@@ -484,7 +485,7 @@ def main():
         raise ValueError('Range start of %i greater than range end of %i'
             % (rangestart, rangeend))
 
-    if chunking:
+    if options.chunking:
         # Process a big batch of messages at once.
         # In theory, this works well with smaller situations and cuts
         # down on a lot of FETCH traffic.  However, in big batches or
