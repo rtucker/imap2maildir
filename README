@@ -4,9 +4,9 @@ See COPYRIGHT for your rights, http://github.com/rtucker/imap2maildir/ for info
 
 Usage: imap2maildir [options]
 
-A script to copy a remote IMAP folder to a local maildir         storage area.
-Ideal for incremental backups of mail from free         webmail providers, or
-perhaps as an alternative for fetchmail.
+A script to copy a remote IMAP folder to a local maildir storage area.  Ideal
+for incremental backups of mail from free webmail providers, or perhaps as an
+alternative to fetchmail.
 
 Options:
   --version             show program's version number and exit
@@ -16,38 +16,33 @@ Options:
     -u USERNAME, --username=USERNAME
                         Username for authentication to IMAP server
     -d PATH, --destination=PATH
-                        Destination maildir path, e.g.
-                        /home/jrandom/Backups/Gmail
+                        Destination maildir path, e.g. ~/Backups/Gmail
 
   Optional and debugging options:
     -p PASSWORD, --password=PASSWORD
-                        Password for authentication to IMAP server. (will ask
-                        if blank)
+                        Password for IMAP server.  Default: prompt user
     -H HOSTNAME, --hostname=HOSTNAME
                         Hostname of IMAP server, default: imap.gmail.com
     -P PORT, --port=PORT
                         Port number.  Default: 993 (SSL), 143 (clear)
     -v, --verbose       Turns up the verbosity
-    -q, --quiet         Squelches all standard output (except prompts and
-                        errors)
+    -q, --quiet         Quiets all output (except prompts and errors)
     -r FOLDERNAME, --remote-folder=FOLDERNAME
-                        Remote IMAP folder to retrieve.  Defaults to
-                        [Gmail]/All Mail
-    --range-start=NUM   Start with sequence NUM (0=high water mark).  Default:
-                        0
-    --range-end=NUM     End with sequence NUM (0=all messages).  Default: 0
+                        Remote IMAP folder.  Default: [Gmail]/All Mail
+    --range-start=NUM   Start with seq NUM (0=high water mark).  Default: 0
+    --range-end=NUM     End before seq NUM (0=all messages).  Default: 0
     --create            If --destination doesn't exist, create it
     -m MAX, --max-messages=MAX
                         Max messages to process in one run.  Default: 1000
     -c CONFIGFILE, --config-file=CONFIGFILE
                         Configuration file to use.  Default: imap2maildir.conf
+    -C, --chunking      Enable chunking FETCH mode.  Default: False
 
   SSL-related options:
     By default, tries SSL first then cleartext.
 
     -S, --force-ssl     Require SSL to connect, default: False
-    -s, --no-ssl        Do not try to use SSL to connect, default: will try
-                        SSL
+    -s, --no-ssl        Don't use SSL to connect, default: will try SSL
 
 COMMAND LINE EXAMPLES
  $ imap2maildir -u bob@yourplace.com -d /home/bob/backups/mail --create
@@ -57,6 +52,26 @@ COMMAND LINE EXAMPLES
  $ imap2maildir -c something.conf -m 5000
    Uses the something.conf configuration, except with the max messages set to
    5000.
+
+CHUNKING MODE?
+There are two ways in which this script can interrogate the mail server
+for a list of messages:
+    Chunking Mode:
+        Does one big fetch for all messages in a range, usually from the
+        previous high water mark to max-messages beyond it.
+        PRO: Really fast, especially when we already have a lot of the
+             messages in the range, since it only needs to do one FETCH
+             to get all the info it needs to check a bunch of messages.
+        CON: Can use a lot of memory with larger ranges.  Also, if there's
+             a problem somewhere along the line, it will barf all over
+             the place.
+    Iterating Mode (current default):
+        Fetches each message header individually, like doing a chunking
+        mode with max-messages equal to 1.
+        PRO: Able to handle errors very well.  In the event you have a lot
+             of messages to go through, it requires less memory.
+        CON: Slower than chunking mode, since it requires a FETCH for each
+             individual message.  Creates a fair bit of network traffic.
 
 PROBLEMS/COMPLAINTS/SUGGESTIONS
 Please use the github issue tracker at:

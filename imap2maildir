@@ -329,9 +329,10 @@ def parse_options(defaults):
 
     # Parse command line options
     usage = "usage: %prog [options]"
-    description = "A script to copy a remote IMAP folder to a local maildir \
-        storage area.  Ideal for incremental backups of mail from free \
-        webmail providers, or perhaps as an alternative for fetchmail."
+    description =  "A script to copy a remote IMAP folder to a local maildir "
+    description += "storage area.  Ideal for incremental backups of mail "
+    description += "from free webmail providers, or perhaps as an "
+    description += "alternative to fetchmail."
     if gotconfig:
         description = description + '\n\nConfiguration defaults read from \
             file "%s"' % firstoptions.configfile
@@ -361,10 +362,10 @@ def parse_options(defaults):
     required.add_option("-u", "--username", dest="username",
         help="Username for authentication to IMAP server", metavar="USERNAME")
     required.add_option("-d", "--destination", dest="destination",
-        help="Destination maildir path, e.g. /home/jrandom/Backups/Gmail",
+        help="Destination maildir path, e.g. ~/Backups/Gmail",
         metavar="PATH")
     optional.add_option("-p", "--password", dest="password",
-        help="Password for authentication to IMAP server. (will ask if blank)",
+        help="Password for IMAP server.  Default: prompt user",
         metavar="PASSWORD")
     optional.add_option("-H", "--hostname", dest="hostname",
         help="Hostname of IMAP server, default: %default", metavar="HOSTNAME")
@@ -373,16 +374,16 @@ def parse_options(defaults):
     optional.add_option("-v", "--verbose", dest="debug",
         help="Turns up the verbosity", action="store_const", const=2)
     optional.add_option("-q", "--quiet", dest="debug",
-        help="Squelches all standard output (except prompts and errors)",
+        help="Quiets all output (except prompts and errors)",
         action="store_const", const=0)
     optional.add_option("-r", "--remote-folder", dest="remotefolder",
-        help="Remote IMAP folder to retrieve.  Defaults to %default",
+        help="Remote IMAP folder.  Default: %default",
         metavar="FOLDERNAME")
     optional.add_option("--range-start", dest="rangestart",
-        help="Start with sequence NUM (0=high water mark).  Default: %default",
+        help="Start with seq NUM (0=high water mark).  Default: %default",
         metavar="NUM", type="int")
     optional.add_option("--range-end", dest="rangeend",
-        help="End before sequence NUM (0=all messages).  Default: %default",
+        help="End before seq NUM (0=all messages).  Default: %default",
         metavar="NUM", type="int")
     optional.add_option("--create", dest="create",
         help="If --destination doesn't exist, create it", action="store_true")
@@ -397,7 +398,7 @@ def parse_options(defaults):
     ssl.add_option("-S", "--force-ssl", dest="forcessl",
         help="Require SSL to connect, default: %default", action="store_true")
     ssl.add_option("-s", "--no-ssl", dest="tryssl",
-        help="Do not try to use SSL to connect, default: will try SSL",
+        help="Don't use SSL to connect, default: will try SSL",
         action="store_false")
 
     # Parse
