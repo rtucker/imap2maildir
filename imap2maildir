@@ -14,7 +14,7 @@
 # PEP-0008 compliance
 #   - Docstrings
 
-version = "%prog 0.99 20090628"
+version = "%prog 0.999 20090712"
 
 import ConfigParser
 import email
@@ -49,6 +49,9 @@ defaults = {
             'maxmessages': 1000,
             'configfile': 'imap2maildir.conf'
             }
+
+# Use old chunking method?
+chunking = False
 
 def open_imap_session(username, password, hostname, forcessl, tryssl, port):
     # Opens an IMAP session to a given server.
@@ -481,26 +484,57 @@ def main():
         raise ValueError('Range start of %i greater than range end of %i'
             % (rangestart, rangeend))
 
-    # Get the pile!
-    log.info('Retrieving messages from %i to %i...' % (rangestart, rangeend))
-    dict = retreive_imap_message_listchunk(imap, rangestart, rangeend)
-    # Start handling messages!
-    handledcount = 0
-    uidlist = dict.keys()
-    uidlist.sort()
-    for i in uidlist:
-        if check_hash(db, dict[i]['hash']):
-            log.debug('SEEN: ' + `i`)
-        else:
-            message = get_imap_message_by_uid(imap, i)
-            msgfilename = store_message_in_mailbox(mailbox, message)
-            store_hash(db, dict[i]['hash'], msgfilename)
-            log.debug(' NEW: ' + `i`)
-        handledcount = handledcount + 1
-        mostrecent = (dict[i]['sequence'], i)
-        if handledcount % 100 == 0:
-            log.info('Processed %i of %i (seq %i, uid %i)...'
-                % (handledcount, maxmsgs, mostrecent[0], mostrecent[1]))
+    if chunking:
+        # Process a big batch of messages at once.
+        # In theory, this works well with smaller situations and cuts
+        # down on a lot of FETCH traffic.  However, in big batches or
+        # when there's an error along the way, this fails miserably.
+        log.info('Retrieving messages from %i to %i...' % (rangestart,
+            rangeend))
+        dict = retreive_imap_message_listchunk(imap, rangestart, rangeend)
+        # Start handling messages!
+        handledcount = 0
+        uidlist = dict.keys()
+        uidlist.sort()
+        for i in uidlist:
+            if check_hash(db, dict[i]['hash']):
+                log.debug('SEEN: ' + `i`)
+            else:
+                message = get_imap_message_by_uid(imap, i)
+                msgfilename = store_message_in_mailbox(mailbox, message)
+                store_hash(db, dict[i]['hash'], msgfilename)
+                log.debug(' NEW: ' + `i`)
+            handledcount = handledcount + 1
+            mostrecent = (dict[i]['sequence'], i)
+            if handledcount % 100 == 0:
+                log.info('Processed %i of %i (seq %i, uid %i)...'
+                    % (handledcount, maxmsgs, mostrecent[0], mostrecent[1]))
+    else:
+        # Iterate from rangestart to rangeend, getting messages as required.
+        # This creates a lot more FETCH traffic, but uses less memory and
+        # handles errors more cleanly.
+        log.info('Iterating from %i to %i...' % (rangestart, rangeend))
+        handledcount = 0
+        for i in range(rangestart, rangeend):
+            # Do we have this message?
+            try:
+                dict = retreive_imap_message_listchunk(imap, i, i)
+            except IOError:
+                log.info('FAIL: Attempt to fetch %i got %s\n' %
+                     (i, sys.exc_value))
+            uid = dict.keys()[0]
+            if check_hash(db, dict[uid]['hash']):
+                log.debug('SEEN: ' + `i`)
+            else:
+                message = get_imap_message_by_uid(imap, uid)
+                msgfilename = store_message_in_mailbox(mailbox, message)
+                store_hash(db, dict[uid]['hash'], msgfilename)
+                log.debug(' NEW: ' + `i`)
+            handledcount += 1
+            mostrecent = (dict[uid]['sequence'], i)
+            if handledcount % 100 == 0:
+                log.info('Processed %i of %i (seq %i, uid %i)...'
+                    % (handledcount, maxmsgs, mostrecent[0], mostrecent[1]))
 
     # And we're done.
     if options.rangestart > 1:
