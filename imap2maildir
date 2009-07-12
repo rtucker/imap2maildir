@@ -506,6 +506,9 @@ def main():
         options.hostname, options.forcessl, options.tryssl, options.port)
     # Select mailbox and retrieve message count
     msgcount = select_imap_mailbox(imap, options.remotefolder)
+    # If max messages is 0, set it to msgcount
+    if options.maxmessages == 0:
+        options.maxmessages = msgcount
     # Figure out the highest message we've seen so far
     if options.rangestart == 0:
         hwmsequence, hwmuid = get_highwatermark(db)
