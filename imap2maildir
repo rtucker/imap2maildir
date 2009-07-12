@@ -527,7 +527,7 @@ def main():
                 store_hash(db, dict[uid]['hash'], msgfilename)
                 log.debug(' NEW: ' + `i`)
             handledcount += 1
-            mostrecent = (dict[uid]['sequence'], i)
+            mostrecent = (dict[uid]['sequence'], uid)
             if handledcount % 100 == 0:
                 log.info('Processed %i of %i (seq %i, uid %i)...'
                     % (handledcount, maxmsgs, mostrecent[0], mostrecent[1]))
