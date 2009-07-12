@@ -128,7 +128,6 @@ def retreive_imap_message_listchunk(imap, start, end):
     sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
     daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',re.IGNORECASE|re.DOTALL)
 
-    log.debug('Preparing to fetch batch from %i to %i' % (start, end))
     if start == end:
         rangename = '%i' % start
     else:
@@ -158,8 +157,9 @@ def retreive_imap_message_listchunk(imap, start, end):
         log.debug('Num:%6i UID:%6i Size:%8i Date:%34s Msgid:%s'
             % (count, uid, size, date, msgid))
 
-    log.debug('List from %i to %i complete, %i received, %i bytes found'
-        % (start, end, len(outdict), sizeometer))
+    if start != end:
+        log.debug('List from %i to %i complete, %i received, %i bytes found'
+            % (start, end, len(outdict), sizeometer))
 
     return outdict
 
@@ -384,7 +384,7 @@ def parse_options(defaults):
         help="Start with sequence NUM (0=high water mark).  Default: %default",
         metavar="NUM", type="int")
     optional.add_option("--range-end", dest="rangeend",
-        help="End with sequence NUM (0=all messages).  Default: %default",
+        help="End before sequence NUM (0=all messages).  Default: %default",
         metavar="NUM", type="int")
     optional.add_option("--create", dest="create",
         help="If --destination doesn't exist, create it", action="store_true")
@@ -490,20 +490,18 @@ def main():
         # down on a lot of FETCH traffic.  However, in big batches or
         # when there's an error along the way, this fails miserably.
         log.info('Retrieving messages from %i to %i...' % (rangestart,
-            rangeend))
+            rangeend-1))
         dict = retreive_imap_message_listchunk(imap, rangestart, rangeend)
         # Start handling messages!
         handledcount = 0
         uidlist = dict.keys()
         uidlist.sort()
         for i in uidlist:
-            if check_hash(db, dict[i]['hash']):
-                log.debug('SEEN: ' + `i`)
-            else:
+            if not check_hash(db, dict[i]['hash']):
                 message = get_imap_message_by_uid(imap, i)
                 msgfilename = store_message_in_mailbox(mailbox, message)
                 store_hash(db, dict[i]['hash'], msgfilename)
-                log.debug(' NEW: ' + `i`)
+                log.debug('NEW MESSAGE: ' + `i`)
             handledcount = handledcount + 1
             mostrecent = (dict[i]['sequence'], i)
             if handledcount % 100 == 0:
@@ -513,19 +511,17 @@ def main():
         # Iterate from rangestart to rangeend, getting messages as required.
         # This creates a lot more FETCH traffic, but uses less memory and
         # handles errors more cleanly.
-        log.info('Iterating from %i to %i...' % (rangestart, rangeend))
+        log.info('Iterating from %i to %i...' % (rangestart, rangeend-1))
         handledcount = 0
         for i in range(rangestart, rangeend):
             # Do we have this message?
             try:
                 dict = retreive_imap_message_listchunk(imap, i, i)
             except IOError:
-                log.info('FAIL: Attempt to fetch %i got %s\n' %
+                log.info('FAIL: Attempt to fetch %i got %s' %
                      (i, sys.exc_value))
             uid = dict.keys()[0]
-            if check_hash(db, dict[uid]['hash']):
-                log.debug('SEEN: ' + `i`)
-            else:
+            if not check_hash(db, dict[uid]['hash']):
                 message = get_imap_message_by_uid(imap, uid)
                 msgfilename = store_message_in_mailbox(mailbox, message)
                 store_hash(db, dict[uid]['hash'], msgfilename)
@@ -540,6 +536,7 @@ def main():
     if options.rangestart > 1:
         log.debug('Not setting high water mark: specified range start > 1')
     else:
+        log.debug('Setting high water mark...')
         set_highwatermark(db, mostrecent[0], mostrecent[1])
     log.info('FINISHED: Sequence %i, UID %i, total processed: %i'
         % (mostrecent[0], mostrecent[1], handledcount))
