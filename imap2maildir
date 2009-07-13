@@ -436,7 +436,7 @@ def parse_options(defaults):
     return options
 
 
-def copy_messages_chunkmode(db, imap, rangestart, rangeend):
+def copy_messages_chunkmode(db, imap, rangestart, rangeend, mbox):
     # Process a big batch of messages at once.
     # In theory, this works well with smaller situations and cuts
     # down on a lot of FETCH traffic.  However, in big batches or
@@ -451,7 +451,7 @@ def copy_messages_chunkmode(db, imap, rangestart, rangeend):
     for i in uidlist:
         if not check_hash(db, dict[i]['hash']):
             message = get_imap_message_by_uid(imap, i)
-            msgfilename = store_message_in_mailbox(mailbox, message)
+            msgfilename = store_message_in_mailbox(mbox, message)
             store_hash(db, dict[i]['hash'], msgfilename)
             log.debug('NEW MESSAGE: ' + `i`)
         handledcount = handledcount + 1
@@ -462,7 +462,7 @@ def copy_messages_chunkmode(db, imap, rangestart, rangeend):
     return (mostrecent, handledcount)
 
 
-def copy_messages_iterating(db, imap, rangestart, rangeend):
+def copy_messages_iterating(db, imap, rangestart, rangeend, mbox):
     # Iterate from rangestart to rangeend, getting messages as required.
     # This creates a lot more FETCH traffic, but uses less memory and
     # handles errors more cleanly.
@@ -478,7 +478,7 @@ def copy_messages_iterating(db, imap, rangestart, rangeend):
         uid = dict.keys()[0]
         if not check_hash(db, dict[uid]['hash']):
             message = get_imap_message_by_uid(imap, uid)
-            msgfilename = store_message_in_mailbox(mailbox, message)
+            msgfilename = store_message_in_mailbox(mbox, message)
             store_hash(db, dict[uid]['hash'], msgfilename)
             log.debug(' NEW: ' + `i`)
         handledcount += 1
@@ -495,7 +495,7 @@ def main():
     options = parse_options(defaults)
 
     # Open maildir
-    mailbox = open_mailbox(options.destination, options.create)
+    mbox = open_mailbox(options.destination, options.create)
 
     # Open database (do this after opening maildir)
     db = open_sql_session(options.destination)
@@ -545,10 +545,10 @@ def main():
     # Do the copies
     if options.chunking:
         (mostrecent, handledcount) = copy_messages_chunkmode(db, imap,
-                                                  rangestart, rangeend)
+                                                  rangestart, rangeend, mbox)
     else:
         (mostrecent, handledcount) = copy_messages_iterating(db, imap,
-                                                  rangestart, rangeend)
+                                                  rangestart, rangeend, mbox)
 
     # And we're done.
     if options.rangestart > 1:
