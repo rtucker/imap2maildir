@@ -541,6 +541,8 @@ def main():
     if rangestart > rangeend:
         raise ValueError('Range start of %i greater than range end of %i'
             % (rangestart, rangeend))
+    if rangeend > msgcount:
+        rangeend = msgcount + 1
 
     # Do the copies
     if options.chunking:
