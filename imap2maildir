@@ -248,9 +248,9 @@ def open_mailbox(directory, create=False):
     return box
 
 
-def store_message_in_mailbox(mailbox, message):
+def store_message_in_mailbox(mbox, message):
     # Chuck a message safely into a mailbox.  Return filename if successful.
-    filename = mailbox.add(message)
+    filename = mbox.add(message)
     return filename
 
 
