@@ -14,18 +14,18 @@
 # PEP-0008 compliance
 #   - Docstrings
 
-version = "%prog 0.999 20090712"
+version = "%prog 0.9999 20090722"
 
 import ConfigParser
 import email
 import getpass
 import hashlib
-import imaplib
 import logging
 import mailbox
 import optparse
 import os
 import re
+import simpleimap
 import sqlite3
 import sys
 
@@ -63,7 +63,7 @@ def open_imap_session(username, password, hostname, forcessl, tryssl, port):
         try:
             log.debug('Attempting SSL connection to %s:%i'
                 % (hostname, sslport))
-            imap = imaplib.IMAP4_SSL(hostname, sslport)
+            imap = simpleimap.SimpleImapSSL(hostname, sslport)
             imap.login(username, password)
             desc = 'SSL'
         except IOError:
@@ -80,7 +80,7 @@ def open_imap_session(username, password, hostname, forcessl, tryssl, port):
         try:
             log.debug('Attempting cleartext connection to %s:%i'
                 % (hostname, clearport))
-            imap = imaplib.IMAP4(hostname, clearport)
+            imap = simpleimap.SimpleImap(hostname, clearport)
             imap.login(username, password)
             desc = 'non-encrypted'
         except IOError:
@@ -160,25 +160,6 @@ def retreive_imap_message_listchunk(imap, start, end):
             % (start, end, len(outdict), sizeometer))
 
     return outdict
-
-
-def get_imap_message_by_uid(imap, uid):
-    # Returns a message given an imap instance and a uid.
-    messagetuple = imap.uid('FETCH', '%i' % uid, '(RFC822)')
-    if messagetuple[0] != 'OK':
-        raise IOError('Failed to fetch message: %s' % `messagetuple[1]`)
-    else:
-        if messagetuple[1]:
-            messagemeat = messagetuple[1][0][1]
-        else:
-            return None
-    # We now have an RFC822-formatted message in messagemeat!
-    message = email.message_from_string(messagemeat)
-    if 'subject' in message:
-        log.debug('Got UID %i, Subject: %s' % (uid, message['subject']))
-    else:
-        log.debug('Got UID %i, Subject: (none)' % (uid))
-    return message
 
 
 def make_hash(size, date, msgid):
@@ -450,7 +431,7 @@ def copy_messages_chunkmode(db, imap, rangestart, rangeend, mbox):
     uidlist.sort()
     for i in uidlist:
         if not check_hash(db, dict[i]['hash']):
-            message = get_imap_message_by_uid(imap, i)
+            message = imap.get_message_by_uid(i)
             msgfilename = store_message_in_mailbox(mbox, message)
             store_hash(db, dict[i]['hash'], msgfilename)
             log.debug('NEW MESSAGE: ' + `i`)
@@ -459,6 +440,7 @@ def copy_messages_chunkmode(db, imap, rangestart, rangeend, mbox):
         if handledcount % 100 == 0:
             log.info('Processed %i messages (seq %i, uid %i)...'
                 % (handledcount, mostrecent[0], mostrecent[1]))
+            set_highwatermark(db, mostrecent[0], mostrecent[1])
     return (mostrecent, handledcount)
 
 
@@ -477,7 +459,7 @@ def copy_messages_iterating(db, imap, rangestart, rangeend, mbox):
                 (i, sys.exc_value))
         uid = dict.keys()[0]
         if not check_hash(db, dict[uid]['hash']):
-            message = get_imap_message_by_uid(imap, uid)
+            message = imap.get_message_by_uid(uid)
             msgfilename = store_message_in_mailbox(mbox, message)
             store_hash(db, dict[uid]['hash'], msgfilename)
             log.debug(' NEW: ' + `i`)
@@ -486,6 +468,7 @@ def copy_messages_iterating(db, imap, rangestart, rangeend, mbox):
         if handledcount % 100 == 0:
             log.info('Processed %i messages (seq %i, uid %i)...'
                 % (handledcount, mostrecent[0], mostrecent[1]))
+            set_highwatermark(db, mostrecent[0], mostrecent[1])
     return (mostrecent, handledcount)
 
 
