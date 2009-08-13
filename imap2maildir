@@ -14,7 +14,7 @@
 # PEP-0008 compliance
 #   - Docstrings
 
-version = "%prog 0.9999 20090722"
+version = "%prog 0.99999 20090813"
 
 import ConfigParser
 import email
@@ -350,9 +350,9 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0):
             outdict['copiedbytes'] += i['size']
         # Update our counters.
         outdict['handled'] += 1
-        if outdict['handled'] % 50 == 0:
+        if outdict['handled'] % 100 == 0:
             percentage = (outdict['handled'] / float(outdict['total'])) * 100
-            log.info('Copied %i/%i messages (%i%% complete, latest UID %i, date %s)' %
+            log.info('Copied %i of %i (%i%%, latest UID %i, date %s)' %
                      (outdict['copied'], outdict['handled'],
                       percentage, i['uid'], i['date']))
         outdict['lastuid'] = i['uid']

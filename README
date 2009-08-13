@@ -29,14 +29,12 @@ Options:
     -q, --quiet         Quiets all output (except prompts and errors)
     -r FOLDERNAME, --remote-folder=FOLDERNAME
                         Remote IMAP folder.  Default: [Gmail]/All Mail
-    --range-start=NUM   Start with seq NUM (0=high water mark).  Default: 0
-    --range-end=NUM     End before seq NUM (0=all messages).  Default: 0
     --create            If --destination doesn't exist, create it
     -m MAX, --max-messages=MAX
-                        Max messages to process in one run.  Default: 1000
+                        Max messages to process in one run (0=infinite).
+                        Default: 0
     -c CONFIGFILE, --config-file=CONFIGFILE
                         Configuration file to use.  Default: imap2maildir.conf
-    -C, --chunking      Enable chunking FETCH mode.  Default: False
 
   SSL-related options:
     By default, tries SSL first then cleartext.
@@ -50,28 +48,19 @@ COMMAND LINE EXAMPLES
  $ imap2maildir -c blarf.conf
    Uses the configuration from blarf.conf
  $ imap2maildir -c something.conf -m 5000
-   Uses the something.conf configuration, except with the max messages set to
-   5000.
+   Uses the something.conf configuration, but overrides maxmessages to 5000.
 
-CHUNKING MODE?
-There are two ways in which this script can interrogate the mail server
-for a list of messages:
-    Chunking Mode:
-        Does one big fetch for all messages in a range, usually from the
-        previous high water mark to max-messages beyond it.
-        PRO: Really fast, especially when we already have a lot of the
-             messages in the range, since it only needs to do one FETCH
-             to get all the info it needs to check a bunch of messages.
-        CON: Can use a lot of memory with larger ranges.  Also, if there's
-             a problem somewhere along the line, it will barf all over
-             the place.
-    Iterating Mode (current default):
-        Fetches each message header individually, like doing a chunking
-        mode with max-messages equal to 1.
-        PRO: Able to handle errors very well.  In the event you have a lot
-             of messages to go through, it requires less memory.
-        CON: Slower than chunking mode, since it requires a FETCH for each
-             individual message.  Creates a fair bit of network traffic.
+CHANGES IN THE 2009/08/13 COMMIT
+ * There is no more chunked vs. iterator mode choice.  It's all handled by
+   generators in simpleimap.py.  This results in a little more network
+   traffic, perhaps, but it results in improved stability.
+ * There is no more high-water-mark logic.  Again, this improves stability
+   for the sake of efficiency.  Note that the -m will no longer be quite
+   as useful (or necessary) as it was before.
+ * The range-start and range-end options are gone.
+
+I think this is going to prove a lot more stable, especially for folks who
+were running into MemoryError exceptions in imaplib.
 
 PROBLEMS/COMPLAINTS/SUGGESTIONS
 Please use the github issue tracker at:
