@@ -46,6 +46,7 @@ defaults = {
             'create': False,
             'maxmessages': 0,
             'configfile': 'imap2maildir.conf',
+            'turbo': True,
             }
 
 def open_imap_session(username, password, hostname, forcessl, tryssl, port):
@@ -113,32 +114,53 @@ def open_sql_session(directory):
     try:
         # try to grab the contents of a table
         c.execute('select * from seenmessages limit 1')
-    except sqlite3.OperationalError:
-        # oops, table isn't there.  noob database
-        log.info("Initializing seen-message database.")
-        c.execute("""create table seenmessages
-            (hash text not null unique, mailfile text not null)""")
+        row = c.fetchone()
+        if len(row) == 2:
+            # need to add a column for uid
+            c.execute("""alter table seenmessages add column
+                         uid integer""")
+    except sqlite3.OperationalError as detail:
+        if detail == 'no such table: seenmessages':
+            # oops, table isn't there.  noob database
+            log.info("Initializing seen-message database.")
+            c.execute("""create table seenmessages
+                (hash text not null unique, mailfile text not null)""")
+        else:
+            # somethin' else actually bad happened
+            raise sqlite3.OperationalError(detail)
     conn.commit()
     return conn
 
 
-def check_hash(conn, hash):
-    # Given a database connection and a hash, returns either None
-    # or the mailfile name
+def check_message(conn, directory, hash=None, uid=None):
+    """Checks to see if a given message exists."""
     c = conn.cursor()
-    c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+    if hash:
+        c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+    elif uid:
+        c.execute('select mailfile from seenmessages where uid=?', (uid, ))
+    else:
+        return False
+
     row = c.fetchone()
     if row:
-        return row[0]
+        return os.path.exists(os.path.join(directory, row[0]))
     else:
-        return None
+        return False
 
 
-def store_hash(conn, hash, mailfile):
-    # Given a database connection, hash, and mailfile,
+def store_hash(conn, hash, mailfile, uid):
+    # Given a database connection, hash, mailfile, and uid,
     # stashes it in the database
     c = conn.cursor()
-    c.execute('insert into seenmessages values (?,?)', (hash, mailfile))
+    c.execute('insert into seenmessages values (?,?,?)', (hash, mailfile, uid))
+    conn.commit()
+
+
+def add_uid_to_hash(conn, hash, uid):
+    """Adds a uid to a hash that's missing its uid"""
+    c = conn.cursor()
+    c.execute('update seenmessages set uid = ? where hash = ?', (uid, hash))
     conn.commit()
 
 
@@ -270,6 +292,9 @@ def parse_options(defaults):
         metavar="FOLDERNAME")
     optional.add_option("--create", dest="create",
         help="If --destination doesn't exist, create it", action="store_true")
+    optional.add_option("--turbo", "-T", dest="turbo",
+        help="Check for message locally before asking IMAP.  Default: %default",
+        action="store_true")
     optional.add_option("-m", "--max-messages", dest="maxmessages",
         help="Max messages to process in one run (0=infinite).  Default: %default",
         metavar="MAX", type="int")
@@ -316,14 +341,15 @@ def parse_options(defaults):
     return options
 
 
-def copy_messages_by_folder(folder, db, imap, mbox, limit=0):
+def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
     """Copies any messages that haven't yet been seen from imap to mbox.
 
     copy_messages_by_folder(folder=simpleimap.SimpleImapSSL().Folder(),
                             db=open_sql_session(),
                             imap=simpleimap.SimpleImapSSL(),
                             mbox=open_mailbox(),
-                            limit=max number of messages to handle (0 = inf))
+                            limit=max number of messages to handle (0 = inf),
+                            turbo=boolean)
 
     Returns: {'total': total length of folder,
               'handled': total messages handled,
@@ -336,24 +362,46 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0):
     outdict['total'] = len(folder)
     log.info("Synchronizing %i messages from %s:%s to %s..." % (outdict['total'], folder.host, folder.folder, mbox._path))
 
+    msgpath = os.path.join(mbox._path, 'new')
+
+    if turbo:
+        # This will pass the check_message function and some useful cargo
+        # along to the Summaries() function in the FolderClass.  It will
+        # use this to check the local cache for the message before hitting
+        # the outside world.  (TODO: Make this less suckful.)
+        log.debug('TURBO MODE ENGAGED!')
+        folder.__turbo__(check_message, db, msgpath)
+    else:
+        log.debug('Not using turbo mode...')
+        folder.__turbo__(None, None, None)
+
     # Iterate through the message summary dicts for the folder.
     for i in folder.Summaries():
         # i = {'uid': , 'msgid': , 'size': , 'date': }
         # Seen it yet?
         msghash = make_hash(i['size'], i['date'], i['msgid'])
-        if not check_hash(db, msghash):
-            # New message.  Copy it.
+
+        if not check_message(db, msgpath, hash=msghash):
+            # Hash not found, copy it.
             msgfile = mbox.add(imap.get_message_by_uid(i['uid']))
-            store_hash(db, msghash, msgfile)
+            store_hash(db, msghash, msgfile, i['uid'])
             log.debug(' NEW: ' + `i`)
             outdict['copied'] += 1
             outdict['copiedbytes'] += i['size']
+        elif not check_message(db, msgpath, uid=i['uid']):
+            # UID is missing in the database (old version needs updated)
+            log.debug('Adding uid %i to msghash %s' % (i['uid'], msghash))
+            add_uid_to_hash(db, msghash, i['uid'])
+        else:
+            log.debug('Unexpected turbo mode on uid %i' % i['uid'])
+
         # Update our counters.
         outdict['handled'] += 1
         if outdict['handled'] % 100 == 0:
-            percentage = (outdict['handled'] / float(outdict['total'])) * 100
-            log.info('Copied %i of %i (%i%%, latest UID %i, date %s)' %
-                     (outdict['copied'], outdict['handled'],
+            turbocounter = folder.turbocounter()
+            percentage = ((outdict['handled'] + turbocounter)/ float(outdict['total'])) * 100
+            log.info('Copied: %i, Turbo: %i, Seen: %i (%i%%, latest UID %i, date %s)' %
+                     (outdict['copied'], turbocounter, outdict['handled'],
                       percentage, i['uid'], i['date']))
         outdict['lastuid'] = i['uid']
         if (outdict['handled'] >= limit) and (limit > 0):
@@ -383,7 +431,8 @@ def main():
 
     # Copy messages!
     result = copy_messages_by_folder(folder=folder, db=db, imap=imap,
-                                     mbox=mbox, limit=options.maxmessages)
+                                     mbox=mbox, limit=options.maxmessages,
+                                     turbo=options.turbo)
 
     log.info('FINISHED: Handled %i, copied %i (%i bytes), last UID was %i' %
         (result['handled'], result['copied'], result['copiedbytes'],

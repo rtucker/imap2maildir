@@ -58,6 +58,10 @@ CHANGES IN THE 2009/08/13 COMMIT
    for the sake of efficiency.  Note that the -m will no longer be quite
    as useful (or necessary) as it was before.
  * The range-start and range-end options are gone.
+ * To make up for some of this, something called TURBO MODE has been added,
+   which checks the local stash of messages for a particular uid before
+   doing an IMAP FETCH for more info.  This can be turned off with the
+   --turbo option if desired.
 
 I think this is going to prove a lot more stable, especially for folks who
 were running into MemoryError exceptions in imaplib.

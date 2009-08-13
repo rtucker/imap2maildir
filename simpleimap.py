@@ -23,23 +23,22 @@ class __simplebase:
 
     def get_uids_by_folder(self, folder, charset=None):
         self.select(folder)
-        status, data = self.search(charset, 'ALL')
+        status, data = self.uid('SEARCH', charset, 'ALL')
         if status != 'OK':
             raise Exception(data)
 
-        for i in data[0].split():
-                yield self.get_uid_by_id(i)
+        return data[0].split()
 
     def get_summaries_by_folder(self, folder, charset=None):
         for i in self.get_uids_by_folder(folder, charset=None):
-            yield self.get_summary_by_uid(i)
+            yield self.get_summary_by_uid(int(i))
 
     def get_messages_by_ids(self, ids):
         for i in ids:
-            yield self.get_message_by_id(i)
+            yield self.get_message_by_id(int(i))
 
     def get_message_by_id(self, id):
-        status, data = self.fetch(id, '(RFC822)')
+        status, data = self.fetch(int(id), '(RFC822)')
 
         if status != 'OK':
             raise Exception(data)
@@ -48,7 +47,7 @@ class __simplebase:
 
     def get_messages_by_uids(self, uids):
         for i in uids:
-            yield self.get_message_by_uid(i)
+            yield self.get_message_by_uid(int(i))
 
     def get_message_by_uid(self, uid):
         status, data = self.uid('FETCH', uid, '(RFC822)')
@@ -60,22 +59,22 @@ class __simplebase:
 
     def get_summaries_by_ids(self, ids):
         for i in ids:
-            yield self.get_summary_by_id(i)
+            yield self.get_summary_by_id(int(i))
 
     def get_summary_by_id(self, id):
-        uid = self.get_uid_by_id(id)
+        uid = self.get_uid_by_id(int(id))
         if uid:
-            return self.get_summary_by_uid(uid)
+            return self.get_summary_by_uid(int(uid))
 
         return None
 
     def get_uids_by_ids(self, ids):
         for i in ids:
-            yield self.get_uid_by_id(i)
+            yield self.get_uid_by_id(int(i))
 
     def get_uid_by_id(self, id):
         """Given a message number (id), returns the UID if it exists."""
-        status, data = self.fetch(id, '(UID)')
+        status, data = self.fetch(int(id), '(UID)')
 
         if status != 'OK':
             raise Exception(data)
@@ -90,7 +89,7 @@ class __simplebase:
 
     def get_summaries_by_uids(self, uids):
         for i in uids:
-            yield self.get_summary_by_uid(i)
+            yield self.get_summary_by_uid(int(i))
 
     def get_summary_by_uid(self, uid):
         """Retrieve a dictionary of simple header information for a given uid.
@@ -128,7 +127,7 @@ class __simplebase:
             if datem: date = datem.group(1)
 
         if msgid or size or date:
-            return {'uid': uid, 'msgid': msgid, 'size': size, 'date': date}
+            return {'uid': int(uid), 'msgid': msgid, 'size': size, 'date': date}
         else:
             return None
 
@@ -152,13 +151,38 @@ class FolderClass:
 
         return int(data[0])
 
+    def __turbo__(self, turbo, turbodb, turboarg):
+        """Enable turbo mode.  Not very general right now; mostly specific
+        to imap2maildir.  Alas."""
+        self.__turbo = turbo
+        self.__turbodb = turbodb
+        self.__turboarg = turboarg
+        self.__turbocounter = 0
+
+    def turbocounter(self, reset=False):
+        if self.__turbo:
+            oldvalue = self.__turbocounter
+            if reset:
+                self.__turbocounter = 0
+            return oldvalue
+        else:
+            return 0
+
     def Messages(self):
         for m in self.__parent.get_messages_by_folder(self.__folder, self.__charset):
             yield m
 
     def Summaries(self):
-        for s in self.__parent.get_summaries_by_folder(self.__folder, self.__charset):
-            yield s
+        if self.__turbo:
+            self.__parent.select(self.__folder)
+            for u in self.Uids():
+                if not self.__turbo(self.__turbodb, self.__turboarg, uid=u):
+                    yield self.__parent.get_summary_by_uid(u)
+                else:
+                    self.__turbocounter += 1
+        else:
+            for s in self.__parent.get_summaries_by_folder(self.__folder, self.__charset):
+                yield s
 
     def Ids(self):
         for i in self.__parent.get_ids_by_folder(self.__folder, self.__charset):
