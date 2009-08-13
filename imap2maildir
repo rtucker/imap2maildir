@@ -43,12 +43,9 @@ defaults = {
             'tryssl': True,
             'port': False,
             'remotefolder': '[Gmail]/All Mail',
-            'rangestart': 0,
-            'rangeend': 0,
             'create': False,
-            'maxmessages': 1000,
+            'maxmessages': 0,
             'configfile': 'imap2maildir.conf',
-            'chunking': False
             }
 
 def open_imap_session(username, password, hostname, forcessl, tryssl, port):
@@ -101,67 +98,6 @@ def open_imap_session(username, password, hostname, forcessl, tryssl, port):
         return imap
 
 
-def select_imap_mailbox(imap, mailbox):
-    # Selects a mailbox for reading.
-    # Select the mailbox.
-    response = imap.select(mailbox=mailbox, readonly=True)
-    if response[0] == 'NO':
-        raise IOError("Attempt to open maildir %s failed: %s"
-            % (mailbox, response[1][0]))
-    elif response[0] == 'OK':
-        messagecount = int(response[1][0])
-        log.debug('Selected mailbox %s, message count: %i'
-            % (mailbox, messagecount))
-        return messagecount
-    else:
-        raise IOError("Attempt to open maildir %s failed: %s"
-            % (mailbox, `response`))
-
-
-def retreive_imap_message_listchunk(imap, start, end):
-    # Fetch a chunk of message list from the IMAP server.
-    # Returns UIDs, sizes, internaldates, and message-ids for each message.
-    uidrg = re.compile('.*?UID\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
-    msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',re.IGNORECASE|re.DOTALL)
-    sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
-    daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',re.IGNORECASE|re.DOTALL)
-
-    if start == end:
-        rangename = '%i' % start
-    else:
-        rangename = '%i:%i' % (start, end)
-    response = imap.fetch('%s'
-        % (rangename),'(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
-    if response[0] != 'OK':
-        raise IOError("Unexpected response from IMAP server: %s" % `response`)
-
-    outdict = {}
-    sizeometer = 0
-
-    for i in response[1]:
-        msgid = size = date = None
-        count = int(i.split()[0])
-        uidm = uidrg.match(i)
-        msgidm = msgidrg.match(i)
-        sizem = sizerg.match(i)
-        datem = daterg.match(i)    
-        if uidm: uid = int(uidm.group(1))
-        if msgidm: msgid = msgidm.group(1)
-        if sizem: size = int(sizem.group(1))
-        if datem: date = datem.group(1)
-        if size: sizeometer = sizeometer + size
-        outdict[uid] = {'msgid': msgid, 'size': size, 'date': date,
-            'hash': make_hash(size, date, msgid), 'sequence': count}
-        log.debug('Num:%6i UID:%6i Size:%8i Date:%34s Msgid:%s'
-            % (count, uid, size, date, msgid))
-
-    if start != end:
-        log.debug('List from %i to %i complete, %i received, %i bytes found'
-            % (start, end, len(outdict), sizeometer))
-
-    return outdict
-
-
 def make_hash(size, date, msgid):
     # Returns a hash of a message given the size, date, and msgid thingies.
     return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
@@ -182,8 +118,6 @@ def open_sql_session(directory):
         log.info("Initializing seen-message database.")
         c.execute("""create table seenmessages
             (hash text not null unique, mailfile text not null)""")
-        c.execute("""create table highwatermark (sequence int, uid int)""")
-        c.execute('insert into highwatermark values (0, 0)')
     conn.commit()
     return conn
 
@@ -208,41 +142,16 @@ def store_hash(conn, hash, mailfile):
     conn.commit()
 
 
-def get_highwatermark(conn):
-    # Gets the current high water mark sequence number and uid
-    c = conn.cursor()
-    c.execute('select sequence, uid from highwatermark')
-    (sequence, uid) = c.fetchone()
-    return (sequence, uid)
-
-
-def set_highwatermark(conn, sequence, uid):
-    # Sets the current high water mark sequence number and uid
-    c = conn.cursor()
-    c.execute('update highwatermark set sequence=?, uid=?', (sequence, uid))
-    conn.commit()
-
-
 def open_mailbox(directory, create=False):
     # There is a mailbox here.
-    box = mailbox.Maildir(directory, create=create)
-    return box
-
-
-def store_message_in_mailbox(mbox, message):
-    # Chuck a message safely into a mailbox.  Return filename if successful.
-    filename = mbox.add(message)
-    return filename
+    return mailbox.Maildir(directory, create=create)
 
 
 def smells_like_maildir(dir):
     # Quick check for the cur/tmp/new folders
-    if os.path.exists(os.path.join(dir, 'cur')) and \
-       os.path.exists(os.path.join(dir, 'new')) and \
-       os.path.exists(os.path.join(dir, 'tmp')):
-        return True
-    else:
-        return False
+    return os.path.exists(os.path.join(dir, 'cur')) and \
+           os.path.exists(os.path.join(dir, 'new')) and \
+           os.path.exists(os.path.join(dir, 'tmp'))
 
 
 def parse_config_file(defaults,configfile='imap2maildir.conf'):
@@ -334,8 +243,7 @@ def parse_options(defaults):
         iname = i[0]
         if i[1] == 'False': ivalue = False
         elif i[1] == 'True': ivalue = True
-        elif i[0] in ['port', 'debug', 'rangestart', 'rangeend',
-            'maxmessages']: ivalue = int(i[1])
+        elif i[0] in ['port', 'debug', 'maxmessages']: ivalue = int(i[1])
         else: ivalue = i[1]
         parser.set_default(iname, ivalue)
 
@@ -360,22 +268,13 @@ def parse_options(defaults):
     optional.add_option("-r", "--remote-folder", dest="remotefolder",
         help="Remote IMAP folder.  Default: %default",
         metavar="FOLDERNAME")
-    optional.add_option("--range-start", dest="rangestart",
-        help="Start with seq NUM (0=high water mark).  Default: %default",
-        metavar="NUM", type="int")
-    optional.add_option("--range-end", dest="rangeend",
-        help="End before seq NUM (0=all messages).  Default: %default",
-        metavar="NUM", type="int")
     optional.add_option("--create", dest="create",
         help="If --destination doesn't exist, create it", action="store_true")
     optional.add_option("-m", "--max-messages", dest="maxmessages",
-        help="Max messages to process in one run.  Default: %default",
+        help="Max messages to process in one run (0=infinite).  Default: %default",
         metavar="MAX", type="int")
     optional.add_option("-c", "--config-file", dest="configfile",
         help="Configuration file to use.  Default: %default")
-    optional.add_option("-C", "--chunking", dest="chunking",
-        action="store_true",
-        help="Enable chunking FETCH mode.  Default: %default")
     ssl.add_option("-S", "--force-ssl", dest="forcessl",
         help="Require SSL to connect, default: %default", action="store_true")
     ssl.add_option("-s", "--no-ssl", dest="tryssl",
@@ -417,59 +316,47 @@ def parse_options(defaults):
     return options
 
 
-def copy_messages_chunkmode(db, imap, rangestart, rangeend, mbox):
-    # Process a big batch of messages at once.
-    # In theory, this works well with smaller situations and cuts
-    # down on a lot of FETCH traffic.  However, in big batches or
-    # when there's an error along the way, this fails miserably.
-    log.info('Retrieving messages from %i to %i...' % (rangestart,
-        rangeend-1))
-    dict = retreive_imap_message_listchunk(imap, rangestart, rangeend)
-    # Start handling messages!
-    handledcount = 0
-    uidlist = dict.keys()
-    uidlist.sort()
-    for i in uidlist:
-        if not check_hash(db, dict[i]['hash']):
-            message = imap.get_message_by_uid(i)
-            msgfilename = store_message_in_mailbox(mbox, message)
-            store_hash(db, dict[i]['hash'], msgfilename)
-            log.debug('NEW MESSAGE: ' + `i`)
-        handledcount = handledcount + 1
-        mostrecent = (dict[i]['sequence'], i)
-        if handledcount % 100 == 0:
-            log.info('Processed %i messages (seq %i, uid %i)...'
-                % (handledcount, mostrecent[0], mostrecent[1]))
-            set_highwatermark(db, mostrecent[0], mostrecent[1])
-    return (mostrecent, handledcount)
+def copy_messages_by_folder(folder, db, imap, mbox, limit=0):
+    """Copies any messages that haven't yet been seen from imap to mbox.
 
+    copy_messages_by_folder(folder='[Gmail]/All Mail',
+                            db=open_sql_session(),
+                            imap=simpleimap.SimpleImapSSL(),
+                            mbox=open_mailbox(),
+                            limit=max number of messages to handle (0 = inf))
 
-def copy_messages_iterating(db, imap, rangestart, rangeend, mbox):
-    # Iterate from rangestart to rangeend, getting messages as required.
-    # This creates a lot more FETCH traffic, but uses less memory and
-    # handles errors more cleanly.
-    log.info('Iterating from %i to %i...' % (rangestart, rangeend-1))
-    handledcount = 0
-    for i in range(rangestart, rangeend):
-        # Do we have this message?
-        try:
-            dict = retreive_imap_message_listchunk(imap, i, i)
-        except IOError:
-            log.info('FAIL: Attempt to fetch %i got %s' %
-                (i, sys.exc_value))
-        uid = dict.keys()[0]
-        if not check_hash(db, dict[uid]['hash']):
-            message = imap.get_message_by_uid(uid)
-            msgfilename = store_message_in_mailbox(mbox, message)
-            store_hash(db, dict[uid]['hash'], msgfilename)
+    Returns: {'handled': total messages handled,
+              'copied': total messages copied,
+              'copiedbytes': size of total messages copied,
+              'lastuid': last UID seen}
+    """
+
+    log.info("Beginning copy of %s to %s..." % (folder, mbox._path))
+    outdict = {'handled': 0, 'copied': 0, 'copiedbytes': 0, 'lastuid': 0}
+
+    # Iterate through the message summary dicts for the folder.
+    for i in imap.get_summaries_by_folder(folder):
+        # i = {'uid': , 'msgid': , 'size': , 'date': }
+        # Seen it yet?
+        msghash = make_hash(i['size'], i['date'], i['msgid'])
+        if not check_hash(db, msghash):
+            # New message.  Copy it.
+            msgfile = mbox.add(imap.get_message_by_uid(i['uid']))
+            store_hash(db, msghash, msgfile)
             log.debug(' NEW: ' + `i`)
-        handledcount += 1
-        mostrecent = (dict[uid]['sequence'], uid)
-        if handledcount % 100 == 0:
-            log.info('Processed %i messages (seq %i, uid %i)...'
-                % (handledcount, mostrecent[0], mostrecent[1]))
-            set_highwatermark(db, mostrecent[0], mostrecent[1])
-    return (mostrecent, handledcount)
+            outdict['copied'] += 1
+            outdict['copiedbytes'] += i['size']
+        # Update our counters.
+        outdict['handled'] += 1
+        if outdict['handled'] % 100 == 0:
+            log.info('Processed %i messages (latest UID %i, date %s)' %
+                     (outdict['handled'], i['uid'], i['date']))
+        outdict['lastuid'] = i['uid']
+        if (outdict['handled'] >= limit) and (limit > 0):
+            log.info('Limit of %i messages reached' % limit)
+            break
+
+    return outdict
 
 
 def main():
@@ -483,66 +370,18 @@ def main():
     # Open database (do this after opening maildir)
     db = open_sql_session(options.destination)
 
-    # Get IMAP stuff underway
-    # Connect to server
+    # Connect to IMAP server
     imap = open_imap_session(options.username, options.password,
         options.hostname, options.forcessl, options.tryssl, options.port)
-    # Select mailbox and retrieve message count
-    msgcount = select_imap_mailbox(imap, options.remotefolder)
-    # If max messages is 0, set it to msgcount
-    if options.maxmessages == 0:
-        options.maxmessages = msgcount
-    # Figure out the highest message we've seen so far
-    if options.rangestart == 0:
-        hwmsequence, hwmuid = get_highwatermark(db)
-        if hwmsequence == 0:
-            log.debug('First run, assuming high water mark is 1.')
-            rangestart = 1
-        else:
-            hwmactualuid = retreive_imap_message_listchunk(imap, hwmsequence,
-                hwmsequence).keys()[0]
-            if hwmactualuid == hwmuid:
-                # High water mark data still valid, hooray
-                log.debug('High water mark from last: seq %i.' % hwmsequence)
-                rangestart = hwmsequence
-            else:
-                # High water mark data invalid
-                log.debug('HWM was seq %i; expected uid %i, got %i.  Reinit.'
-                    % (hwmsequence, hwmuid, hwmactualuid))
-                rangestart = 1
-    else:
-        rangestart = options.rangestart
-    # Set the range end too
-    if options.rangeend == 0:
-        rangeend = options.maxmessages + rangestart
-        maxmsgs = options.maxmessages
-    else:
-        rangeend = options.rangeend
-        maxmsgs = rangeend - rangestart
 
-    # Verify some sanity...
-    if rangestart > rangeend:
-        raise ValueError('Range start of %i greater than range end of %i'
-            % (rangestart, rangeend))
-    if rangeend > msgcount:
-        rangeend = msgcount + 1
+    # Copy messages!
+    result = copy_messages_by_folder(folder=options.remotefolder,
+                                     db=db, imap=imap, mbox=mbox,
+                                     limit=options.maxmessages)
 
-    # Do the copies
-    if options.chunking:
-        (mostrecent, handledcount) = copy_messages_chunkmode(db, imap,
-                                                  rangestart, rangeend, mbox)
-    else:
-        (mostrecent, handledcount) = copy_messages_iterating(db, imap,
-                                                  rangestart, rangeend, mbox)
-
-    # And we're done.
-    if options.rangestart > 1:
-        log.debug('Not setting high water mark: specified range start > 1')
-    else:
-        log.debug('Setting high water mark...')
-        set_highwatermark(db, mostrecent[0], mostrecent[1])
-    log.info('FINISHED: Sequence %i, UID %i, total processed: %i'
-        % (mostrecent[0], mostrecent[1], handledcount))
+    log.info('FINISHED: Handled %i, copied %i (%i bytes), last UID was %i' %
+        (result['handled'], result['copied'], result['copiedbytes'],
+         result['lastuid']))
 
 if __name__ == "__main__":
     main()
