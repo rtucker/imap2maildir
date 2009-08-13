@@ -358,7 +358,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
               'lastuid': last UID seen}
     """
 
-    outdict = {'handled': 0, 'copied': 0, 'copiedbytes': 0, 'lastuid': 0}
+    outdict = {'turbo': 0, 'handled': 0, 'copied': 0, 'copiedbytes': 0, 'lastuid': 0}
     outdict['total'] = len(folder)
     log.info("Synchronizing %i messages from %s:%s to %s..." % (outdict['total'], folder.host, folder.folder, mbox._path))
 
@@ -397,11 +397,12 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
 
         # Update our counters.
         outdict['handled'] += 1
+        outdict['turbo'] = folder.turbocounter()
+
         if outdict['handled'] % 100 == 0:
-            turbocounter = folder.turbocounter()
-            percentage = ((outdict['handled'] + turbocounter)/ float(outdict['total'])) * 100
+            percentage = ((outdict['handled'] + outdict['turbo'])/ float(outdict['total'])) * 100
             log.info('Copied: %i, Turbo: %i, Seen: %i (%i%%, latest UID %i, date %s)' %
-                     (outdict['copied'], turbocounter, outdict['handled'],
+                     (outdict['copied'], outdict['turbo'], outdict['handled'],
                       percentage, i['uid'], i['date']))
         outdict['lastuid'] = i['uid']
         if (outdict['handled'] >= limit) and (limit > 0):
@@ -434,9 +435,7 @@ def main():
                                      mbox=mbox, limit=options.maxmessages,
                                      turbo=options.turbo)
 
-    log.info('FINISHED: Handled %i, copied %i (%i bytes), last UID was %i' %
-        (result['handled'], result['copied'], result['copiedbytes'],
-         result['lastuid']))
+    log.info('FINISHED: Turboed %(turbo)i, handled %(handled)i, copied %(copied)i (%(copiedbytes)i bytes), last UID was %(lastuid)i' % result)
 
 if __name__ == "__main__":
     main()
