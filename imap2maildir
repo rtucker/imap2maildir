@@ -319,23 +319,25 @@ def parse_options(defaults):
 def copy_messages_by_folder(folder, db, imap, mbox, limit=0):
     """Copies any messages that haven't yet been seen from imap to mbox.
 
-    copy_messages_by_folder(folder='[Gmail]/All Mail',
+    copy_messages_by_folder(folder=simpleimap.SimpleImapSSL().Folder(),
                             db=open_sql_session(),
                             imap=simpleimap.SimpleImapSSL(),
                             mbox=open_mailbox(),
                             limit=max number of messages to handle (0 = inf))
 
-    Returns: {'handled': total messages handled,
+    Returns: {'total': total length of folder,
+              'handled': total messages handled,
               'copied': total messages copied,
               'copiedbytes': size of total messages copied,
               'lastuid': last UID seen}
     """
 
-    log.info("Beginning copy of %s to %s..." % (folder, mbox._path))
     outdict = {'handled': 0, 'copied': 0, 'copiedbytes': 0, 'lastuid': 0}
+    outdict['total'] = len(folder)
+    log.info("Synchronizing %i messages from %s:%s to %s..." % (outdict['total'], folder.host, folder.folder, mbox._path))
 
     # Iterate through the message summary dicts for the folder.
-    for i in imap.get_summaries_by_folder(folder):
+    for i in folder.Summaries():
         # i = {'uid': , 'msgid': , 'size': , 'date': }
         # Seen it yet?
         msghash = make_hash(i['size'], i['date'], i['msgid'])
@@ -348,9 +350,11 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0):
             outdict['copiedbytes'] += i['size']
         # Update our counters.
         outdict['handled'] += 1
-        if outdict['handled'] % 100 == 0:
-            log.info('Processed %i messages (latest UID %i, date %s)' %
-                     (outdict['handled'], i['uid'], i['date']))
+        if outdict['handled'] % 50 == 0:
+            percentage = (outdict['handled'] / float(outdict['total'])) * 100
+            log.info('Copied %i/%i messages (%i%% complete, latest UID %i, date %s)' %
+                     (outdict['copied'], outdict['handled'],
+                      percentage, i['uid'], i['date']))
         outdict['lastuid'] = i['uid']
         if (outdict['handled'] >= limit) and (limit > 0):
             log.info('Limit of %i messages reached' % limit)
@@ -374,10 +378,12 @@ def main():
     imap = open_imap_session(options.username, options.password,
         options.hostname, options.forcessl, options.tryssl, options.port)
 
+    # Instantiate a folder
+    folder = imap.Folder(folder=options.remotefolder)
+
     # Copy messages!
-    result = copy_messages_by_folder(folder=options.remotefolder,
-                                     db=db, imap=imap, mbox=mbox,
-                                     limit=options.maxmessages)
+    result = copy_messages_by_folder(folder=folder, db=db, imap=imap,
+                                     mbox=mbox, limit=options.maxmessages)
 
     log.info('FINISHED: Handled %i, copied %i (%i bytes), last UID was %i' %
         (result['handled'], result['copied'], result['copiedbytes'],

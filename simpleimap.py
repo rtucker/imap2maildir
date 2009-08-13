@@ -132,6 +132,42 @@ class __simplebase:
         else:
             return None
 
+    def Folder(self, folder, charset=None):
+        """Returns an instance of FolderClass."""
+        return FolderClass(self, folder, charset)
+
+class FolderClass:
+    """Class for instantiating a folder instance."""
+    def __init__(self, parent, folder='INBOX', charset=None):
+        self.__folder = folder
+        self.__charset = charset
+        self.__parent = parent
+        self.host = parent.host
+        self.folder = folder
+
+    def __len__(self):
+        status, data = self.__parent.select(self.__folder)
+        if status != 'OK':
+            raise Exception(data)
+
+        return int(data[0])
+
+    def Messages(self):
+        for m in self.__parent.get_messages_by_folder(self.__folder, self.__charset):
+            yield m
+
+    def Summaries(self):
+        for s in self.__parent.get_summaries_by_folder(self.__folder, self.__charset):
+            yield s
+
+    def Ids(self):
+        for i in self.__parent.get_ids_by_folder(self.__folder, self.__charset):
+            yield i
+
+    def Uids(self):
+        for u in self.__parent.get_uids_by_folder(self.__folder, self.__charset):
+            yield u
+
 class SimpleImap(imaplib.IMAP4, __simplebase):
     pass
 
