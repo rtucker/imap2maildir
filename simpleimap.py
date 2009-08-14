@@ -113,7 +113,7 @@ class __simplebase:
                               '(ENVELOPE RFC822.SIZE INTERNALDATE)')
 
         if status != 'OK':
-            raise Exception(data)
+            return None
 
         msgid = size = date = None
 
@@ -177,7 +177,9 @@ class FolderClass:
             self.__parent.select(self.__folder)
             for u in self.Uids():
                 if not self.__turbo(self.__turbodb, self.__turboarg, uid=u):
-                    yield self.__parent.get_summary_by_uid(u)
+                    summ = self.__parent.get_summary_by_uid(u)
+                    if summ:
+                        yield summ
                 else:
                     self.__turbocounter += 1
         else:
