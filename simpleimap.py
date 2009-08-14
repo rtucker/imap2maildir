@@ -5,6 +5,7 @@
 import email
 import imaplib
 import re
+import time
 
 class __simplebase:
     def get_messages_by_folder(self, folder, charset=None):
@@ -141,6 +142,7 @@ class FolderClass:
         self.__folder = folder
         self.__charset = charset
         self.__parent = parent
+        self.__keepaliver = self.__keepaliver_none__
         self.host = parent.host
         self.folder = folder
 
@@ -150,6 +152,12 @@ class FolderClass:
             raise Exception(data)
 
         return int(data[0])
+
+    def __keepaliver__(self, keepaliver):
+        self.__keepaliver = keepaliver
+
+    def __keepaliver_none__(self):
+        pass
 
     def __turbo__(self, turbo, turbodb, turboarg):
         """Enable turbo mode.  Not very general right now; mostly specific
@@ -181,6 +189,8 @@ class FolderClass:
                     if summ:
                         yield summ
                 else:
+                    # long hangtimes can suck
+                    self.__keepaliver()
                     self.__turbocounter += 1
         else:
             for s in self.__parent.get_summaries_by_folder(self.__folder, self.__charset):
@@ -193,6 +203,43 @@ class FolderClass:
     def Uids(self):
         for u in self.__parent.get_uids_by_folder(self.__folder, self.__charset):
             yield u
+
+class Server:
+    """Class for instantiating a server instance"""
+    def __init__(self, hostname=None, username=None, password=None, port=None, ssl=True):
+        self.__hostname = hostname
+        self.__username = username
+        self.__password = password
+        self.__ssl = ssl
+        self.__connection = None
+        self.__lastnoop = 0
+
+        if port:
+            self.__port = port
+        elif ssl:
+            self.__port = 993
+        else:
+            self.__port = 143
+
+        if self.__hostname and self.__username and self.__password:
+            self.Connect()
+
+    def Connect(self):
+        if self.__ssl:
+            self.__connection = SimpleImapSSL(self.__hostname, self.__port)
+        else:
+            self.__connection = SimpleImap(self.__hostname, self.__port)
+
+        self.__connection.login(self.__username, self.__password)
+
+    def Get(self):
+        return self.__connection
+
+    def Keepalive(self):
+        """Call me occasionally just to make sure everything's OK..."""
+        if self.__lastnoop + 30 < time.time():
+            self.__connection.noop()
+            self.__lastnoop = time.time()
 
 class SimpleImap(imaplib.IMAP4, __simplebase):
     pass

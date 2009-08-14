@@ -39,8 +39,7 @@ defaults = {
             'debug': 1,
             'password': False,
             'hostname': 'imap.gmail.com',
-            'forcessl': False,
-            'tryssl': True,
+            'ssl': True,
             'port': False,
             'remotefolder': '[Gmail]/All Mail',
             'create': False,
@@ -48,55 +47,6 @@ defaults = {
             'configfile': 'imap2maildir.conf',
             'turbo': True,
             }
-
-def open_imap_session(username, password, hostname, forcessl, tryssl, port):
-    # Opens an IMAP session to a given server.
-    if port:
-        sslport = clearport = port
-    else:
-        sslport = 993
-        clearport = 143
-    # Try SSL first
-    if tryssl:
-        try:
-            log.debug('Attempting SSL connection to %s:%i'
-                % (hostname, sslport))
-            imap = simpleimap.SimpleImapSSL(hostname, sslport)
-            imap.login(username, password)
-            desc = 'SSL'
-        except IOError:
-            # probably not the port we're after
-            log.debug('I/O Error (SSL): %s: %s' % (sys.exc_type, sys.exc_value))
-            imap = None
-        except imap.error:
-            # Usually something protocolly
-            log.debug('IMAP Error (cleartext): %s: %s'
-                % (sys.exc_type, sys.exc_value))
-            raise IOError("Connection to server failed: %s" % sys.exc_value)
-    # That went poorly; try not using SSL.
-    if not imap and not forcessl:
-        try:
-            log.debug('Attempting cleartext connection to %s:%i'
-                % (hostname, clearport))
-            imap = simpleimap.SimpleImap(hostname, clearport)
-            imap.login(username, password)
-            desc = 'non-encrypted'
-        except IOError:
-            # Again, fail.
-            log.debug('I/O Error (cleartext): %s: %s'
-                % (sys.exc_type, sys.exc_value))
-            imap = None
-        except imap.error:
-            log.debug('IMAP Error (cleartext): %s: %s'
-                % (sys.exc_type, sys.exc_value))
-            raise IOError("Connection to server failed: %s" % sys.exc_value)
-    if not imap:
-        raise IOError("Unable to connect to IMAP server")
-    else:
-        log.debug(imap.welcome)
-        log.info('Connected to %s:%i using a %s connection.'
-            % (imap.sock.getpeername()[0], imap.sock.getpeername()[1], desc))
-        return imap
 
 
 def make_hash(size, date, msgid):
@@ -254,8 +204,6 @@ def parse_options(defaults):
     # Set up some groups
     required = optparse.OptionGroup(parser, "Required options")
     optional = optparse.OptionGroup(parser, "Optional and debugging options")
-    ssl = optparse.OptionGroup(parser, "SSL-related options",
-        "By default, tries SSL first then cleartext.")
 
     # Set the defaults...
     if gotconfig: sectionname = 'imap2maildir'
@@ -300,16 +248,12 @@ def parse_options(defaults):
         metavar="MAX", type="int")
     optional.add_option("-c", "--config-file", dest="configfile",
         help="Configuration file to use.  Default: %default")
-    ssl.add_option("-S", "--force-ssl", dest="forcessl",
-        help="Require SSL to connect, default: %default", action="store_true")
-    ssl.add_option("-s", "--no-ssl", dest="tryssl",
-        help="Don't use SSL to connect, default: will try SSL",
-        action="store_false")
+    optional.add_option("-S", "--ssl", dest="ssl",
+        help="Use SSL to connect, default: %default", action="store_true")
 
     # Parse
     parser.add_option_group(required)
     parser.add_option_group(optional)
-    parser.add_option_group(ssl)
     (options, args) = parser.parse_args()
 
     # Check for required options
@@ -424,11 +368,15 @@ def main():
     db = open_sql_session(options.destination)
 
     # Connect to IMAP server
-    imap = open_imap_session(options.username, options.password,
-        options.hostname, options.forcessl, options.tryssl, options.port)
+    imapserver = simpleimap.Server(hostname=options.hostname,
+                   username=options.username, password=options.password,
+                   port=options.port, ssl=options.ssl)
+
+    imap = imapserver.Get()
 
     # Instantiate a folder
     folder = imap.Folder(folder=options.remotefolder)
+    folder.__keepaliver__(imapserver.Keepalive)
 
     # Copy messages!
     result = copy_messages_by_folder(folder=folder, db=db, imap=imap,
