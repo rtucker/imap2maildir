@@ -240,9 +240,9 @@ def parse_options(defaults):
         metavar="FOLDERNAME")
     optional.add_option("--create", dest="create",
         help="If --destination doesn't exist, create it", action="store_true")
-    optional.add_option("--turbo", "-T", dest="turbo",
+    optional.add_option("--no-turbo", "-T", dest="turbo",
         help="Check for message locally before asking IMAP.  Default: %default",
-        action="store_true")
+        action="store_false")
     optional.add_option("-m", "--max-messages", dest="maxmessages",
         help="Max messages to process in one run (0=infinite).  Default: %default",
         metavar="MAX", type="int")
