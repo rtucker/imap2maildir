@@ -481,6 +481,9 @@ def main():
         raise ValueError('Range start of %i greater than range end of %i'
             % (rangestart, rangeend))
 
+    if rangeend > msgcount:
+        rangeend = msgcount
+
     # Get the pile!
     log.info('Retrieving messages from %i to %i...' % (rangestart, rangeend))
     dict = retreive_imap_message_listchunk(imap, rangestart, rangeend)
