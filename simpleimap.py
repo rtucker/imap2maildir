@@ -4,6 +4,7 @@
 
 import email
 import imaplib
+import platform
 import re
 import time
 
@@ -245,4 +246,22 @@ class SimpleImap(imaplib.IMAP4, __simplebase):
     pass
 
 class SimpleImapSSL(imaplib.IMAP4_SSL, __simplebase):
-    pass
+    def read(self, n):
+        if 'Windows' in platform.platform():
+            # Override the read() function; fixes a problem on Windows
+            # when it tries to eat too much.  http://bugs.python.org/issue1441530
+            if n <= 1000000:
+                return imaplib.IMAP4_SSL.read (self, n)
+            else:
+                soFar = 0
+                result = ""
+                while soFar < n:
+                    thisFragmentSize = min(maxRead, n-soFar)
+                    fragment =\
+                        imaplib.IMAP4_SSL.read (self, thisFragmentSize)
+                    result += fragment
+                    soFar += thisFragmentSize # only a few, so not a tragic o/head
+            return result
+        else:
+            return imaplib.IMAP4_SSL.read (self, n)
+
