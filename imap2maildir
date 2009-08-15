@@ -93,9 +93,7 @@ def check_message(conn, mbox, hash=None, uid=None):
 
     row = c.fetchone()
     if row:
-        if testmethod(row[0]):
-            log.debug('Message exists: key=%s uid=%s hash=%s' % (row[0],str(uid),hash))
-            return True
+        return testmethod(row[0])
     else:
         return False
 
@@ -104,6 +102,10 @@ def store_hash(conn, hash, mailfile, uid):
     # Given a database connection, hash, mailfile, and uid,
     # stashes it in the database
     c = conn.cursor()
+    # nuke it if it's already there.  (can happen if disk file goes away)
+    cur = c.execute('delete from seenmessages where hash = ?', (hash, ))
+    if cur.rowcount > 0:
+        log.debug('!!! Nuked duplicate hash %s' % hash)
     c.execute('insert into seenmessages values (?,?,?)', (hash, mailfile, uid))
     conn.commit()
 
