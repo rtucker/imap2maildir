@@ -87,7 +87,9 @@ def check_message(conn, mbox, hash=None, uid=None):
 
     row = c.fetchone()
     if row:
-        return mbox.has_key(row[0])
+        if mbox.has_key(row[0]):
+            log.debug('Message exists: key=%s uid=%s hash=%s' % (row[0],str(uid),hash))
+            return True
     else:
         return False
 
@@ -107,9 +109,16 @@ def add_uid_to_hash(conn, hash, uid):
     conn.commit()
 
 
-def open_mailbox(directory, create=False):
+def open_mailbox_maildir(directory, create=False):
     # There is a mailbox here.
     return mailbox.Maildir(directory, create=create)
+
+
+def open_mailbox_mbox(filename, create=False):
+    # Open a mbox file, lock for writing
+    mbox = mailbox.mbox(filename, create=create)
+    mbox.lock()
+    return mbox
 
 
 def smells_like_maildir(dir):
@@ -284,7 +293,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
     copy_messages_by_folder(folder=simpleimap.SimpleImapSSL().Folder(),
                             db=open_sql_session(),
                             imap=simpleimap.SimpleImapSSL(),
-                            mbox=open_mailbox(),
+                            mbox=open_mailbox_*(),
                             limit=max number of messages to handle (0 = inf),
                             turbo=boolean)
 
@@ -346,6 +355,8 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
             log.info('Limit of %i messages reached' % limit)
             break
 
+    # Make sure this gets updated...
+    outdict['turbo'] = folder.turbocounter()
     return outdict
 
 
@@ -355,7 +366,7 @@ def main():
     options = parse_options(defaults)
 
     # Open maildir
-    mbox = open_mailbox(options.destination, options.create)
+    mbox = open_mailbox_maildir(options.destination, options.create)
 
     # Open database (do this after opening maildir)
     db = open_sql_session(options.destination)
@@ -376,6 +387,10 @@ def main():
                                      mbox=mbox, limit=options.maxmessages,
                                      turbo=options.turbo)
 
+    # Unlock the mailbox if locked.
+    mbox.unlock()
+
+    # Print results.
     log.info('FINISHED: Turboed %(turbo)i, handled %(handled)i, copied %(copied)i (%(copiedbytes)i bytes), last UID was %(lastuid)i' % result)
 
 if __name__ == "__main__":
