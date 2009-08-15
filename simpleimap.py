@@ -248,9 +248,10 @@ class SimpleImap(imaplib.IMAP4, __simplebase):
 class SimpleImapSSL(imaplib.IMAP4_SSL, __simplebase):
     def read(self, n):
         if 'Windows' in platform.platform():
+            maxRead = 1000000
             # Override the read() function; fixes a problem on Windows
             # when it tries to eat too much.  http://bugs.python.org/issue1441530
-            if n <= 1000000:
+            if n <= maxRead:
                 return imaplib.IMAP4_SSL.read (self, n)
             else:
                 soFar = 0
