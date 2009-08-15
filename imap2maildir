@@ -75,7 +75,7 @@ def open_sql_session(directory):
     return conn
 
 
-def check_message(conn, directory, hash=None, uid=None):
+def check_message(conn, mbox, hash=None, uid=None):
     """Checks to see if a given message exists."""
     c = conn.cursor()
     if hash:
@@ -87,7 +87,7 @@ def check_message(conn, directory, hash=None, uid=None):
 
     row = c.fetchone()
     if row:
-        return os.path.exists(os.path.join(directory, row[0]))
+        return mbox.has_key(row[0])
     else:
         return False
 
@@ -307,7 +307,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
         # use this to check the local cache for the message before hitting
         # the outside world.  (TODO: Make this less suckful.)
         log.debug('TURBO MODE ENGAGED!')
-        folder.__turbo__(check_message, db, msgpath)
+        folder.__turbo__(check_message, db, mbox)
     else:
         log.debug('Not using turbo mode...')
         folder.__turbo__(None, None, None)
@@ -318,14 +318,14 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
         # Seen it yet?
         msghash = make_hash(i['size'], i['date'], i['msgid'])
 
-        if not check_message(db, msgpath, hash=msghash):
+        if not check_message(db, mbox, hash=msghash):
             # Hash not found, copy it.
             msgfile = mbox.add(imap.get_message_by_uid(i['uid']))
             store_hash(db, msghash, msgfile, i['uid'])
             log.debug(' NEW: ' + `i`)
             outdict['copied'] += 1
             outdict['copiedbytes'] += i['size']
-        elif not check_message(db, msgpath, uid=i['uid']):
+        elif not check_message(db, mbox, uid=i['uid']):
             # UID is missing in the database (old version needs updated)
             log.debug('Adding uid %i to msghash %s' % (i['uid'], msghash))
             add_uid_to_hash(db, msghash, i['uid'])
