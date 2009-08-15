@@ -63,18 +63,18 @@ def open_sql_session(directory):
     c = conn.cursor()
     try:
         # try to grab the contents of a table
-        c.execute('select * from seenmessages limit 1')
-        row = c.fetchone()
-        if len(row) == 2:
+        c.execute('pragma table_info(seenmessages)')
+        columns = ' '.join(i[1] for i in c.fetchall()).split()
+        if not 'uid' in columns:
             # need to add a column for uid
             c.execute("""alter table seenmessages add column
                          uid integer""")
     except sqlite3.OperationalError as detail:
-        if detail == 'no such table: seenmessages':
+        if str(detail) == 'no such table: seenmessages':
             # oops, table isn't there.  noob database
             log.info("Initializing seen-message database.")
             c.execute("""create table seenmessages
-                (hash text not null unique, mailfile text not null)""")
+                (hash text not null unique, mailfile text not null, uid integer)""")
         else:
             # somethin' else actually bad happened
             raise sqlite3.OperationalError(detail)
