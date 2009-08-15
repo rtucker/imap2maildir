@@ -85,9 +85,15 @@ def check_message(conn, mbox, hash=None, uid=None):
     else:
         return False
 
+    # Technically, mbox.has_key(x) (or even x in mbox) should be the right
+    # way to determine the existence of a message.  However, on my huge
+    # test mailbox, this is REALLY SLOW.  So, I'm using mbox.get here.
+    testmethod = mbox.get
+    #testmethod = mbox.has_key
+
     row = c.fetchone()
     if row:
-        if mbox.has_key(row[0]):
+        if testmethod(row[0]):
             log.debug('Message exists: key=%s uid=%s hash=%s' % (row[0],str(uid),hash))
             return True
     else:
