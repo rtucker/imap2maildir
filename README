@@ -30,17 +30,14 @@ Options:
     -r FOLDERNAME, --remote-folder=FOLDERNAME
                         Remote IMAP folder.  Default: [Gmail]/All Mail
     --create            If --destination doesn't exist, create it
+    -T, --no-turbo      Check for message locally before asking IMAP.
+                        Default: True
     -m MAX, --max-messages=MAX
                         Max messages to process in one run (0=infinite).
                         Default: 0
     -c CONFIGFILE, --config-file=CONFIGFILE
                         Configuration file to use.  Default: imap2maildir.conf
-
-  SSL-related options:
-    By default, tries SSL first then cleartext.
-
-    -S, --force-ssl     Require SSL to connect, default: False
-    -s, --no-ssl        Don't use SSL to connect, default: will try SSL
+    -S, --ssl           Use SSL to connect, default: True
 
 COMMAND LINE EXAMPLES
  $ imap2maildir -u bob@yourplace.com -d /home/bob/backups/mail --create
@@ -50,21 +47,41 @@ COMMAND LINE EXAMPLES
  $ imap2maildir -c something.conf -m 5000
    Uses the something.conf configuration, but overrides maxmessages to 5000.
 
-CHANGES IN THE 2009/08/13 COMMIT
- * There is no more chunked vs. iterator mode choice.  It's all handled by
-   generators in simpleimap.py.  This results in a little more network
-   traffic, perhaps, but it results in improved stability.
+CHANGES FROM ORIGINAL VERSION
+The original version is in git as "0.99-beta".
+ * The IMAP message-handling logic has been abstracted out to simpleimap.py.
+   This hopes to become its own project to provide an interface to IMAP that
+   resembles the "mailbox" module.  Eventually.  Thanks to TJ Fontaine
+   for the first bits of this!
+ * The original method of iterating through the messages has been replaced.
+   The new method appears slower, BUT it is less resource-intensive.
+   There's plenty of work for optimization on this, I'm sure.
+ * A new column has been added to the seenmessages table, "uid".  This will
+   store the uid along with the hash and message key, for faster iterating
+   through established backups.  It should "auto-upgrade" itself (I hope).
+   This allows for the use of TURBO MODE.
+ * range-start and range-end have gone away, and max-messages now defaults
+   to 0 (e.g. no limit).  I think we're past the point of large mailboxes
+   causing explosions.
  * There is no more high-water-mark logic.  Again, this improves stability
    for the sake of efficiency.  Note that the -m will no longer be quite
    as useful (or necessary) as it was before.
- * The range-start and range-end options are gone.
- * To make up for some of this, something called TURBO MODE has been added,
-   which checks the local stash of messages for a particular uid before
-   doing an IMAP FETCH for more info.  This can be turned off with the
-   --turbo option if desired.
+ * There's a workaround for a SSL bug in some older versions of Python
+   on Windows.  Thanks to Jeff Dean for this, and many other, bug reports!!
 
 I think this is going to prove a lot more stable, especially for folks who
 were running into MemoryError exceptions in imaplib.
+
+Command line/config file option changes:
+ Remove --range-start
+ Remove --range-end
+ Change default --max-messages to 0 (e.g. infinite)
+ Replace --force-ssl and --no-ssl with just --ssl
+
+THE NEXT GOAL
+Less mailbox-specificity.  Turns out that my Gmail box is ~93,000 messages,
+and that sucks for maildir.  By popular demand, mbox support is next on the
+to-do list.
 
 PROBLEMS/COMPLAINTS/SUGGESTIONS
 Please use the github issue tracker at:

@@ -14,7 +14,7 @@
 # PEP-0008 compliance
 #   - Docstrings
 
-version = "%prog 0.99999 20090813"
+version = "%prog 1.00 20090816"
 
 import ConfigParser
 import email
