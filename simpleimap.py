@@ -9,6 +9,89 @@ import re
 import time
 
 class __simplebase:
+    def parseFetch(self, text):
+        """Given a string (e.g. '1 (ENVELOPE...'), breaks it down into
+        a useful format.
+
+        Based on Helder Guerreiro <helder@paxjulia.com>'s
+        imaplib2 sexp.py: http://code.google.com/p/webpymail/
+        """
+
+        literal_re = re.compile(r'^{(\d+)}\r\n')
+        simple_re = re.compile(r'^([^ ()]+)')
+        quoted_re = re.compile(r'^"((?:[^"\\]|\\")*?)"')
+
+        pos = 0
+        length = len(text)
+        current = ''
+        result = []
+        cur_result = result
+        level = [ cur_result ]
+
+        # Scanner
+        while pos < length:
+
+            # Quoted literal:
+            if text[pos] == '"':
+                quoted = quoted_re.match(text[pos:])
+                if quoted:
+                    cur_result.append( quoted.groups()[0] )
+                    pos += quoted.end() - 1
+
+            # Numbered literal:
+            elif text[pos] == '{':
+                lit = literal_re.match(text[pos:])
+                if lit:
+                    start = pos+lit.end()
+                    end = pos+lit.end()+int(lit.groups()[0])
+                    pos = end - 1
+                    cur_result.append( text[ start:end ] )
+
+            # Simple literal
+            elif text[pos] not in '() ':
+                simple = simple_re.match(text[pos:])
+                if simple:
+                    tmp = simple.groups()[0]
+                    if tmp.isdigit():
+                        tmp = int(tmp)
+                    elif tmp == 'NIL':
+                        tmp = None
+                    cur_result.append( tmp )
+                    pos += simple.end() - 1
+
+            # Level handling, if we find a '(' we must add another list, if we
+            # find a ')' we must return to the previous list.
+            elif text[pos] == '(':
+                cur_result.append([])
+                cur_result = cur_result[-1]
+                level.append(cur_result)
+
+            elif text[pos] == ')':
+                try:
+                    cur_result = level[-2]
+                    del level[-1]
+                except IndexError:
+                    raise ValueError('Unexpected parenthesis at pos %d' % pos)
+
+            pos += 1
+
+        # We now have a list of lists.  Dict this a bit...
+        outerdict = self.__listdictor(result)
+        replydict = {}
+
+        for i in outerdict.keys():
+            replydict[i] = self.__listdictor(outerdict[i])
+
+        return replydict
+
+    def __listdictor(self, inlist):
+        outdict = {}
+
+        for i in xrange(0,len(inlist),2):
+            outdict[inlist[i]] = inlist[i+1]
+
+        return outdict
+
     def get_messages_by_folder(self, folder, charset=None):
         ids = self.get_ids_by_folder(folder)
 
@@ -100,15 +183,9 @@ class __simplebase:
         Returns: {'uid': UID you requested,
                   'msgid': RFC822 Message ID,
                   'size': Size of message in bytes,
-                  'date': IMAP's Internaldate for the message}
+                  'date': IMAP's Internaldate for the message,
+                  'envelope': Envelope data}
         """
-
-        msgidrg = re.compile('.*?ENVELOPE \(.*?(<[^>]+>)',
-                             re.IGNORECASE|re.DOTALL)
-        sizerg = re.compile('.*?RFC822\\.SIZE\\s+(\\d+)',
-                            re.IGNORECASE|re.DOTALL)
-        daterg = re.compile('.*?INTERNALDATE\\s+(".*?")',
-                            re.IGNORECASE|re.DOTALL)
 
         # Retrieve the message from the server.
         status, data = self.uid('FETCH', uid, 
@@ -117,19 +194,21 @@ class __simplebase:
         if status != 'OK':
             return None
 
-        msgid = size = date = None
+        date = envdate = envfrom = msgid = size = None
 
         if data[0]:
-            msgidm = msgidrg.match(data[0])
-            sizem = sizerg.match(data[0])
-            datem = daterg.match(data[0])    
+            # Grab a list of things in the FETCH response.
+            fetchresult = self.parseFetch(data[0])
+            contents = fetchresult[fetchresult.keys()[0]]
 
-            if msgidm: msgid = msgidm.group(1)
-            if sizem: size = int(sizem.group(1))
-            if datem: date = datem.group(1)
+            date = contents['INTERNALDATE']
+            envdate = contents['ENVELOPE'][0]
+            envfrom = '@'.join(contents['ENVELOPE'][2][0][2:])
+            msgid = contents['ENVELOPE'][9]
+            size = int(contents['RFC822.SIZE'])
 
         if msgid or size or date:
-            return {'uid': int(uid), 'msgid': msgid, 'size': size, 'date': date}
+            return {'uid': int(uid), 'msgid': msgid, 'size': size, 'date': date, 'envfrom': envfrom, 'envdate': envdate}
         else:
             return None
 
