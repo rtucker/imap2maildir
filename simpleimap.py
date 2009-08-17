@@ -246,6 +246,17 @@ class SimpleImap(imaplib.IMAP4, __simplebase):
     pass
 
 class SimpleImapSSL(imaplib.IMAP4_SSL, __simplebase):
+    def readline(self):
+        """Read line from remote.  Overrides built-in method to fix
+        infinite loop problem when EOF occurs, since sslobj.read
+        returns '' on EOF."""
+        line = []
+        while 1:
+            self.sslobj.suppress_ragged_eofs = False
+            char = self.sslobj.read(1)
+            line.append(char)
+            if char == "\n": return ''.join(line)
+
     def read(self, n):
         if 'Windows' in platform.platform():
             maxRead = 1000000
