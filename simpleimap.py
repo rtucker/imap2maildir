@@ -138,7 +138,13 @@ class __simplebase:
         return FolderClass(self, folder, charset)
 
 class FolderClass:
-    """Class for instantiating a folder instance."""
+    """Class for instantiating a folder instance.
+
+    TODO: Trap exceptions like:
+    ssl.SSLError: [Errno 8] _ssl.c:1325: EOF occurred in violation of protocol
+    by trying to reconnect to the server.
+    (Raised up via get_summary_by_uid in Summaries when IMAP server boogers.)
+    """
     def __init__(self, parent, folder='INBOX', charset=None):
         self.__folder = folder
         self.__charset = charset
