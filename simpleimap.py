@@ -256,15 +256,16 @@ class SimpleImapSSL(imaplib.IMAP4_SSL, __simplebase):
         """Read line from remote.  Overrides built-in method to fix
         infinite loop problem when EOF occurs, since sslobj.read
         returns '' on EOF."""
+        self.sslobj.suppress_ragged_eofs = False
         line = []
         while 1:
-            self.sslobj.suppress_ragged_eofs = False
             char = self.sslobj.read(1)
             line.append(char)
             if char == "\n": return ''.join(line)
 
-    def read(self, n):
-        if 'Windows' in platform.platform():
+    if 'Windows' in platform.platform():
+        def read(self, n):
+            """Read 'size' bytes from remote.  (Contains workaround)"""
             maxRead = 1000000
             # Override the read() function; fixes a problem on Windows
             # when it tries to eat too much.  http://bugs.python.org/issue1441530
@@ -280,6 +281,4 @@ class SimpleImapSSL(imaplib.IMAP4_SSL, __simplebase):
                     result += fragment
                     soFar += thisFragmentSize # only a few, so not a tragic o/head
             return result
-        else:
-            return imaplib.IMAP4_SSL.read (self, n)
 
