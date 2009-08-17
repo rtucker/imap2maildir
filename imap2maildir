@@ -28,6 +28,7 @@ import re
 import simpleimap
 import sqlite3
 import sys
+import time
 
 # Handler for logging/debugging/output
 log = logging.getLogger(__name__)
@@ -340,7 +341,10 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
 
         if not check_message(db, mbox, hash=msghash):
             # Hash not found, copy it.
-            msgfile = mbox.add(imap.get_message_by_uid(i['uid']))
+            message = imap.get_message_by_uid(i['uid'])
+            message.set_unixfrom("From %s %s" % (i['envfrom'],
+                            time.asctime(imap.parseInternalDate(i['date']))))
+            msgfile = mbox.add(message)
             store_hash(db, msghash, msgfile, i['uid'])
             log.debug(' NEW: ' + `i`)
             outdict['copied'] += 1

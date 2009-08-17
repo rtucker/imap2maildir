@@ -92,6 +92,58 @@ class __simplebase:
 
         return outdict
 
+    def parseInternalDate(self, resp):
+        """Takes IMAP INTERNALDATE and turns it into a Python time
+        tuple referenced to GMT.
+
+        Based from: http://code.google.com/p/webpymail/
+        """
+
+        Mon2num = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+                 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
+
+        InternalDate = re.compile(
+                        r'(?P<day>[ 0123][0-9])-(?P<mon>[A-Z][a-z][a-z])-(?P<year>[0-9][0-9][0-9][0-9])'
+                        r' (?P<hour>[0-9][0-9]):(?P<min>[0-9][0-9]):(?P<sec>[0-9][0-9])'
+                        r' (?P<zonen>[-+])(?P<zoneh>[0-9][0-9])(?P<zonem>[0-9][0-9])'
+                        )
+
+        mo = InternalDate.match(resp)
+        if not mo:
+            return None
+
+        mon = Mon2num[mo.group('mon')]
+        zonen = mo.group('zonen')
+
+        day = int(mo.group('day'))
+        year = int(mo.group('year'))
+        hour = int(mo.group('hour'))
+        min = int(mo.group('min'))
+        sec = int(mo.group('sec'))
+        zoneh = int(mo.group('zoneh'))
+        zonem = int(mo.group('zonem'))
+
+        zone = (zoneh*60 + zonem)*60
+
+        # handle negative offsets
+        if zonen == '-':
+            zone = -zone
+
+        tt = (year, mon, day, hour, min, sec, -1, -1, -1)
+
+        utc = time.mktime(tt)
+
+        # Following is necessary because the time module has no 'mkgmtime'.
+        # 'mktime' assumes arg in local timezone, so adds timezone/altzone.
+
+        lt = time.localtime(utc)
+        if time.daylight and lt[-1]:
+            zone = zone + time.altzone
+        else:
+            zone = zone + time.timezone
+
+        return time.localtime(utc - zone)
+
     def get_messages_by_folder(self, folder, charset=None):
         ids = self.get_ids_by_folder(folder)
 
