@@ -387,16 +387,17 @@ class SimpleImap(imaplib.IMAP4, __simplebase):
     pass
 
 class SimpleImapSSL(imaplib.IMAP4_SSL, __simplebase):
-    def readline(self):
-        """Read line from remote.  Overrides built-in method to fix
-        infinite loop problem when EOF occurs, since sslobj.read
-        returns '' on EOF."""
-        self.sslobj.suppress_ragged_eofs = False
-        line = []
-        while 1:
-            char = self.sslobj.read(1)
-            line.append(char)
-            if char == "\n": return ''.join(line)
+    if platform.python_version().startswith('2.6.'):
+        def readline(self):
+            """Read line from remote.  Overrides built-in method to fix
+            infinite loop problem when EOF occurs, since sslobj.read
+            returns '' on EOF."""
+            self.sslobj.suppress_ragged_eofs = False
+            line = []
+            while 1:
+                char = self.sslobj.read(1)
+                line.append(char)
+                if char == "\n": return ''.join(line)
 
     if 'Windows' in platform.platform():
         def read(self, n):
