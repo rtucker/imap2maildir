@@ -301,12 +301,10 @@ class FolderClass:
     def __keepaliver_none__(self):
         pass
 
-    def __turbo__(self, turbo, turbodb, turboarg):
-        """Enable turbo mode.  Not very general right now; mostly specific
-        to imap2maildir.  Alas."""
-        self.__turbo = turbo
-        self.__turbodb = turbodb
-        self.__turboarg = turboarg
+    def __turbo__(self, turbofunction):
+        """Calls turbofunction(uid) for every uid, only yielding those
+        where turbofunction returns False.  Set to None to disable."""
+        self.__turbo = turbofunction
         self.__turbocounter = 0
 
     def turbocounter(self, reset=False):
@@ -326,7 +324,7 @@ class FolderClass:
         if self.__turbo:
             self.__parent.select(self.__folder)
             for u in self.Uids():
-                if not self.__turbo(self.__turbodb, self.__turboarg, uid=u):
+                if not self.__turbo(u):
                     summ = self.__parent.get_summary_by_uid(u)
                     if summ:
                         yield summ

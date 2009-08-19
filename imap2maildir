@@ -328,10 +328,10 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False):
         # use this to check the local cache for the message before hitting
         # the outside world.  (TODO: Make this less suckful.)
         log.debug('TURBO MODE ENGAGED!')
-        folder.__turbo__(check_message, db, mbox)
+        folder.__turbo__(lambda uid: check_message(db, mbox, uid=uid))
     else:
         log.debug('Not using turbo mode...')
-        folder.__turbo__(None, None, None)
+        folder.__turbo__(None)
 
     # Iterate through the message summary dicts for the folder.
     for i in folder.Summaries():
