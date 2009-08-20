@@ -280,7 +280,7 @@ def parse_options(defaults):
         if options.create:
             pass
         else:
-            parser.error("Directory '%s' does not exist.  Use --create."
+            parser.error("Destination '%s' does not exist.  Use --create."
                 % options.destination)
     elif options.type == 'maildir' and not smells_like_maildir(options.destination):
         parser.error("Directory '%s' exists, but it isn't a maildir."
