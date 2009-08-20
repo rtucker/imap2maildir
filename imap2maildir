@@ -388,29 +388,29 @@ def main():
     # Parse the command line and config file
     options = parse_options(defaults)
 
-    # Open mailbox & database
-    if options.type == 'maildir':
-        mbox = open_mailbox_maildir(options.destination, options.create)
-        db = open_sql_session(os.path.join(options.destination, '.imap2maildir.sqlite'))
-    elif options.type == 'mbox':
-        mbox = open_mailbox_mbox(options.destination, options.create)
-        db = open_sql_session(options.destination + '.sqlite')
-    else:
+    # Check to make sure the mailbox type is valid (probably redundant)
+    if options.type not in ['maildir', 'mbox']:
         raise ValueError("No valid mailbox type specified")
 
     # Connect to IMAP server
     imapserver = simpleimap.Server(hostname=options.hostname,
                    username=options.username, password=options.password,
                    port=options.port, ssl=options.ssl)
-
     imap = imapserver.Get()
 
     # Instantiate a folder
     folder = imap.Folder(folder=options.remotefolder)
     folder.__keepaliver__(imapserver.Keepalive)
 
-    # Copy messages!
+    # Open mailbox and database, and copy messages
     try:
+        if options.type == 'maildir':
+            mbox = open_mailbox_maildir(options.destination, options.create)
+            db = open_sql_session(os.path.join(options.destination, '.imap2maildir.sqlite'))
+        elif options.type == 'mbox':
+            mbox = open_mailbox_mbox(options.destination, options.create)
+            db = open_sql_session(options.destination + '.sqlite')
+
         result = copy_messages_by_folder(folder=folder, db=db, imap=imap,
                                      mbox=mbox, limit=options.maxmessages,
                                      turbo=options.turbo,
