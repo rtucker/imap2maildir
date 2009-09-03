@@ -199,11 +199,23 @@ class __simplebase:
             yield self.get_summary_by_id(int(i))
 
     def get_summary_by_id(self, id):
-        uid = self.get_uid_by_id(int(id))
-        if uid:
-            return self.get_summary_by_uid(int(uid))
+        """Retrieve a dictionary of simple header information for a given id.
 
-        return None
+        Requires: id (Sequence number of message)
+        Returns: {'uid': UID you requested,
+                  'msgid': RFC822 Message ID,
+                  'size': Size of message in bytes,
+                  'date': IMAP's Internaldate for the message,
+                  'envelope': Envelope data}
+        """
+
+        # Retrieve the message from the server.
+        status, data = self.fetch(id, '(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
+
+        if status != 'OK':
+            return None
+
+        return self.parse_summary_data(data)
 
     def get_uids_by_ids(self, ids):
         for i in ids:
@@ -241,18 +253,34 @@ class __simplebase:
 
         # Retrieve the message from the server.
         status, data = self.uid('FETCH', uid, 
-                              '(ENVELOPE RFC822.SIZE INTERNALDATE)')
+                              '(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
 
         if status != 'OK':
             return None
 
-        date = envdate = envfrom = msgid = size = None
+        return self.parse_summary_data(data)
+
+    def parse_summary_data(self, data):
+        """Takes the data result (second parameter) of a self.uid or
+        self.fetch for (UID ENVELOPE RFC822.SIZE INTERNALDATE) and returns
+        a dict of simple header information.
+
+        Requires: self.uid[1] or self.fetch[1]
+        Returns: {'uid': UID you requested,
+                  'msgid': RFC822 Message ID,
+                  'size': Size of message in bytes,
+                  'date': IMAP's Internaldate for the message,
+                  'envelope': Envelope data}
+        """
+
+        uid = date = envdate = envfrom = msgid = size = None
 
         if data[0]:
             # Grab a list of things in the FETCH response.
             fetchresult = self.parseFetch(data[0])
             contents = fetchresult[fetchresult.keys()[0]]
 
+            uid = contents['UID']
             date = contents['INTERNALDATE']
             envdate = contents['ENVELOPE'][0]
             if contents['ENVELOPE'][2][0][2] and contents['ENVELOPE'][2][0][3]:
