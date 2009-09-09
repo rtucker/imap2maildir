@@ -19,7 +19,7 @@ class __simplebase:
 
         literal_re = re.compile(r'^{(\d+)}\r\n')
         simple_re = re.compile(r'^([^ ()]+)')
-        quoted_re = re.compile(r'^"((?:[^"\\]|\\")*?)"')
+        quoted_re = re.compile(r'^"((?:[^"\\]|\\"|\\)*?)"')
 
         pos = 0
         length = len(text)
