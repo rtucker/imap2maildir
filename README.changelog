@@ -1,0 +1,49 @@
+CHANGES IN 1.10
+ * Added support for mbox mailboxes (default is still maildir).  You can
+   either specify "type: mbox" in the config file or use --type=mbox on the
+   command line.
+ * There's also another option, --mboxdash, which uses "From -" instead of
+   "From blah@blah.com" in the From line of mboxes.  Useful if your mbox
+   client freaks out somewhat.
+ * simpleimap.py now has more parsing guts for parsing IMAP responses,
+   inspired by http://code.google.com/p/webpymail/.  See parseFetch,
+   parseInternalDate.
+ * The "turbo" handler now uses lambda instead of that abomination I was
+   using before.  I knew there was an easier way to do that...
+ * A couple fixes for bugs in Python/imaplib SSL support via SimpleImapSSL.
+   Had a nice juicy infinite loop thanks to gmail's tendency to drop IMAP
+   connections after ~10,000 fetches or so.  (That was not fun to reproduce)
+ * Added testsuite.py, which uses unittest to run a couple tests on
+   simpleimap's parsers.  This will be used more in the future.
+
+CHANGES IN 1.00
+The original version is in git as "0.99-beta".
+ * The IMAP message-handling logic has been abstracted out to simpleimap.py.
+   This hopes to become its own project to provide an interface to IMAP that
+   resembles the "mailbox" module.  Eventually.  Thanks to TJ Fontaine
+   for the first bits of this!
+ * The original method of iterating through the messages has been replaced.
+   The new method appears slower, BUT it is less resource-intensive.
+   There's plenty of work for optimization on this, I'm sure.
+ * A new column has been added to the seenmessages table, "uid".  This will
+   store the uid along with the hash and message key, for faster iterating
+   through established backups.  It should "auto-upgrade" itself (I hope).
+   This allows for the use of TURBO MODE.
+ * range-start and range-end have gone away, and max-messages now defaults
+   to 0 (e.g. no limit).  I think we're past the point of large mailboxes
+   causing explosions.
+ * There is no more high-water-mark logic.  Again, this improves stability
+   for the sake of efficiency.  Note that the -m will no longer be quite
+   as useful (or necessary) as it was before.
+ * There's a workaround for a SSL bug in some older versions of Python
+   on Windows.  Thanks to Jeff Dean for this, and many other, bug reports!!
+
+I think this is going to prove a lot more stable, especially for folks who
+were running into MemoryError exceptions in imaplib.
+
+Command line/config file option changes:
+ Remove --range-start
+ Remove --range-end
+ Change default --max-messages to 0 (e.g. infinite)
+ Replace --force-ssl and --no-ssl with just --ssl
+

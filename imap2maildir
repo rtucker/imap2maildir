@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-# Mirrors the contents of an IMAP4 mailbox into a local maildir.  Intended
-# for keeping a local backup of a remote IMAP4 mailbox to protect against
-# loss.  Very handy for backing up "[Gmail]/All Mail" from your Gmail
-# account, to snag all your archived mail.  Re-running it on a regular
+# Mirrors the contents of an IMAP4 mailbox into a local maildir or mbox.
+# Intended for keeping a local backup of a remote IMAP4 mailbox to protect
+# against loss.  Very handy for backing up "[Gmail]/All Mail" from your
+# Gmail account, to snag all your archived mail.  Re-running it on a regular
 # basis will update only the stuff it needs to.
 
 # Once I need to, I'll write a restore script ;-)
@@ -14,7 +14,7 @@
 # PEP-0008 compliance
 #   - Docstrings
 
-version = "%prog 1.00 20090816"
+version = "%prog 1.10 20090913"
 
 import ConfigParser
 import email
@@ -204,10 +204,11 @@ def parse_options(defaults):
 
     # Parse command line options
     usage = "usage: %prog [options]"
-    description =  "A script to copy a remote IMAP folder to a local maildir "
+    description =  "A script to copy a remote IMAP folder to a local mail "
     description += "storage area.  Ideal for incremental backups of mail "
     description += "from free webmail providers, or perhaps as an "
-    description += "alternative to fetchmail."
+    description += "alternative to fetchmail.  Supports mbox and maildir, "
+    description += "despite the name."
     if gotconfig:
         description = description + '\n\nConfiguration defaults read from \
             file "%s"' % firstoptions.configfile
@@ -234,7 +235,7 @@ def parse_options(defaults):
     required.add_option("-u", "--username", dest="username",
         help="Username for authentication to IMAP server", metavar="USERNAME")
     required.add_option("-d", "--destination", dest="destination",
-        help="Destination maildir path, e.g. ~/Backups/Gmail",
+        help="Where to store the mail, e.g. ~/Backups/Gmail",
         metavar="PATH")
     optional.add_option("-p", "--password", dest="password",
         help="Password for IMAP server.  Default: prompt user",
@@ -257,7 +258,8 @@ def parse_options(defaults):
         help="Check for message locally before asking IMAP.  Default: %default",
         action="store_false")
     optional.add_option("-m", "--max-messages", dest="maxmessages",
-        help="Max messages to process in one run (0=infinite).  Default: %default",
+        help="How many messages to process in one run (0=infinite). " +
+             "Default: %default",
         metavar="MAX", type="int")
     optional.add_option("-c", "--config-file", dest="configfile",
         help="Configuration file to use.  Default: %default")
@@ -267,7 +269,8 @@ def parse_options(defaults):
         help="Mailbox type.  Choice of: maildir, mbox.  Default: %default",
         choices=['maildir', 'mbox'])
     optional.add_option("--mboxdash", dest="mboxdash", action="store_true",
-        help="Use - in the mbox From line (instead of the sender's e-mail address).  Default: %default")
+        help="Use - in the mbox From line instead of sender's address. " +
+             "Default: %default")
 
     # Parse
     parser.add_option_group(required)
@@ -285,7 +288,8 @@ def parse_options(defaults):
         else:
             parser.error("Destination '%s' does not exist.  Use --create."
                 % options.destination)
-    elif options.type == 'maildir' and not smells_like_maildir(options.destination):
+    elif (options.type == 'maildir'
+          and not smells_like_maildir(options.destination)):
         parser.error("Directory '%s' exists, but it isn't a maildir."
                      % options.destination)
     if not options.password:
