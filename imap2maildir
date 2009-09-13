@@ -1,18 +1,19 @@
 #!/usr/bin/python
+"""
+Mirrors the contents of an IMAP4 mailbox into a local maildir or mbox.
+Intended for keeping a local backup of a remote IMAP4 mailbox to protect
+against loss.  Very handy for backing up "[Gmail]/All Mail" from your
+Gmail account, to snag all your archived mail.  Re-running it on a regular
+basis will update only the stuff it needs to.
 
-# Mirrors the contents of an IMAP4 mailbox into a local maildir or mbox.
-# Intended for keeping a local backup of a remote IMAP4 mailbox to protect
-# against loss.  Very handy for backing up "[Gmail]/All Mail" from your
-# Gmail account, to snag all your archived mail.  Re-running it on a regular
-# basis will update only the stuff it needs to.
+Once I need to, I'll write a restore script ;-)
 
-# Once I need to, I'll write a restore script ;-)
+Ryan Tucker <rtucker@gmail.com>
 
-# Ryan Tucker <rtucker@gmail.com>
-
-# TODO:
-# PEP-0008 compliance
-#   - Docstrings
+TODO:
+PEP-0008 compliance
+  - Docstrings
+"""
 
 version = "%prog 1.10 20090913"
 
