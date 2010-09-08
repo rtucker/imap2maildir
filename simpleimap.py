@@ -144,30 +144,30 @@ class __simplebase:
 
         return time.localtime(utc - zone)
 
-    def get_messages_by_folder(self, folder, charset=None):
-        ids = self.get_ids_by_folder(folder)
+    def get_messages_by_folder(self, folder, charset=None, search='ALL'):
+        ids = self.get_ids_by_folder(folder, search)
 
         for m in self.get_messages_by_ids(ids):
             yield m
 
-    def get_ids_by_folder(self, folder, charset=None):
+    def get_ids_by_folder(self, folder, charset=None, search='ALL'):
         self.select(folder)
-        status, data = self.search(charset, 'ALL')
+        status, data = self.search(charset, search)
         if status != 'OK':
             raise Exception(data)
 
         return data[0].split()
 
-    def get_uids_by_folder(self, folder, charset=None):
+    def get_uids_by_folder(self, folder, charset=None, search='ALL'):
         self.select(folder)
-        status, data = self.uid('SEARCH', charset, 'ALL')
+        status, data = self.uid('SEARCH', charset, search)
         if status != 'OK':
             raise Exception(data)
 
         return data[0].split()
 
-    def get_summaries_by_folder(self, folder, charset=None):
-        for i in self.get_uids_by_folder(folder, charset=None):
+    def get_summaries_by_folder(self, folder, charset=None, search='ALL'):
+        for i in self.get_uids_by_folder(folder, charset, search):
             yield self.get_summary_by_uid(int(i))
 
     def get_messages_by_ids(self, ids):
@@ -344,11 +344,11 @@ class FolderClass:
         else:
             return 0
 
-    def Messages(self):
-        for m in self.__parent.get_messages_by_folder(self.__folder, self.__charset):
+    def Messages(self, search='ALL'):
+        for m in self.__parent.get_messages_by_folder(self.__folder, self.__charset, search):
             yield m
 
-    def Summaries(self):
+    def Summaries(self, search='ALL'):
         if self.__turbo:
             self.__parent.select(self.__folder)
             for u in self.Uids():
@@ -361,15 +361,15 @@ class FolderClass:
                     self.__keepaliver()
                     self.__turbocounter += 1
         else:
-            for s in self.__parent.get_summaries_by_folder(self.__folder, self.__charset):
+            for s in self.__parent.get_summaries_by_folder(self.__folder, self.__charset, search):
                 yield s
 
-    def Ids(self):
-        for i in self.__parent.get_ids_by_folder(self.__folder, self.__charset):
+    def Ids(self, search='ALL'):
+        for i in self.__parent.get_ids_by_folder(self.__folder, self.__charset, search):
             yield i
 
-    def Uids(self):
-        for u in self.__parent.get_uids_by_folder(self.__folder, self.__charset):
+    def Uids(self, search='ALL'):
+        for u in self.__parent.get_uids_by_folder(self.__folder, self.__charset, search):
             yield u
 
 class Server:

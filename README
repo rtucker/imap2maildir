@@ -1,12 +1,9 @@
-imap2maildir: a tool for mirroring an IMAP mailbox to a local mail store.
-Ryan Tucker <rtucker@gmail.com>
-See COPYRIGHT for your rights, http://github.com/rtucker/imap2maildir/ for info
-
 Usage: imap2maildir [options]
 
 A script to copy a remote IMAP folder to a local mail storage area.  Ideal for
 incremental backups of mail from free webmail providers, or perhaps as an
-alternative to fetchmail.  Supports mbox and maildir, despite the name.
+alternative to fetchmail.  Supports mbox and maildir, despite the name. See
+COPYRIGHT for your rights; http://github.com/rtucker/imap2maildir/ for info.
 
 Options:
   --version             show program's version number and exit
@@ -29,6 +26,8 @@ Options:
     -q, --quiet         Quiets all output (except prompts and errors)
     -r FOLDERNAME, --remote-folder=FOLDERNAME
                         Remote IMAP folder.  Default: [Gmail]/All Mail
+    -s CRITERIA, --search=CRITERIA
+                        IMAP4 search criteria to use.  Default: OLD
     --create            If --destination doesn't exist, create it
     -T, --no-turbo      Check for message locally before asking IMAP.
                         Default: True

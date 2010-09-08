@@ -15,7 +15,7 @@ PEP-0008 compliance
   - Docstrings
 """
 
-version = "%prog 1.10 20090913"
+version = "%prog 1.10.1 20100908"
 
 import ConfigParser
 import email
@@ -50,6 +50,7 @@ defaults = {
             'turbo': True,
             'type': 'maildir',
             'mboxdash': False,
+            'search': 'OLD',
             }
 
 
@@ -209,7 +210,9 @@ def parse_options(defaults):
     description += "storage area.  Ideal for incremental backups of mail "
     description += "from free webmail providers, or perhaps as an "
     description += "alternative to fetchmail.  Supports mbox and maildir, "
-    description += "despite the name."
+    description += "despite the name. "
+    description += "See COPYRIGHT for your rights; "
+    description += "http://github.com/rtucker/imap2maildir/ for info."
     if gotconfig:
         description = description + '\n\nConfiguration defaults read from \
             file "%s"' % firstoptions.configfile
@@ -253,6 +256,9 @@ def parse_options(defaults):
     optional.add_option("-r", "--remote-folder", dest="remotefolder",
         help="Remote IMAP folder.  Default: %default",
         metavar="FOLDERNAME")
+    optional.add_option("-s", "--search", dest="search",
+        help="IMAP4 search criteria to use.  Default: %default",
+        metavar="CRITERIA")
     optional.add_option("--create", dest="create",
         help="If --destination doesn't exist, create it", action="store_true")
     optional.add_option("--no-turbo", "-T", dest="turbo",
@@ -308,7 +314,7 @@ def parse_options(defaults):
 
 
 def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
-                            mboxdash=False):
+                            mboxdash=False, search=None):
     """Copies any messages that haven't yet been seen from imap to mbox.
 
     copy_messages_by_folder(folder=simpleimap.SimpleImapSSL().Folder(),
@@ -316,7 +322,9 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
                             imap=simpleimap.SimpleImapSSL(),
                             mbox=open_mailbox_*(),
                             limit=max number of messages to handle (0 = inf),
-                            turbo=boolean)
+                            turbo=boolean,
+                            mboxdash=use '-' for mbox From line email?,
+                            search=imap criteria (string),
 
     Returns: {'total': total length of folder,
               'handled': total messages handled,
@@ -343,7 +351,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
         folder.__turbo__(None)
 
     # Iterate through the message summary dicts for the folder.
-    for i in folder.Summaries():
+    for i in folder.Summaries(search):
         # i = {'uid': , 'msgid': , 'size': , 'date': }
         # Seen it yet?
         msghash = make_hash(i['size'], i['date'], i['msgid'])
@@ -416,10 +424,14 @@ def main():
             mbox = open_mailbox_mbox(options.destination, options.create)
             db = open_sql_session(options.destination + '.sqlite')
 
-        result = copy_messages_by_folder(folder=folder, db=db, imap=imap,
-                                     mbox=mbox, limit=options.maxmessages,
-                                     turbo=options.turbo,
-                                     mboxdash=options.mboxdash)
+        result = copy_messages_by_folder(folder=folder,
+                                         db=db,
+                                         imap=imap,
+                                         mbox=mbox,
+                                         limit=options.maxmessages,
+                                         turbo=options.turbo,
+                                         mboxdash=options.mboxdash,
+                                         search=options.search)
     except (KeyboardInterrupt, SystemExit):
         log.warning('Caught interrupt; clearing locks and safing database.')
         mbox.unlock()
