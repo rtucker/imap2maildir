@@ -351,7 +351,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
         folder.__turbo__(None)
 
     # Iterate through the message summary dicts for the folder.
-    for i in folder.Summaries(search):
+    for i in folder.Summaries(search=search):
         # i = {'uid': , 'msgid': , 'size': , 'date': }
         # Seen it yet?
         msghash = make_hash(i['size'], i['date'], i['msgid'])
