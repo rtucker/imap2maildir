@@ -313,6 +313,7 @@ class FolderClass:
         self.__charset = charset
         self.__parent = parent
         self.__keepaliver = self.__keepaliver_none__
+        self.__turbo = None
         self.host = parent.host
         self.folder = folder
 
