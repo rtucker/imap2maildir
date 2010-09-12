@@ -50,7 +50,7 @@ defaults = {
             'turbo': True,
             'type': 'maildir',
             'mboxdash': False,
-            'search': 'OLD',
+            'search': 'SEEN',
             }
 
 
