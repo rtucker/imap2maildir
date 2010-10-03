@@ -26,6 +26,7 @@ import mailbox
 import optparse
 import os
 import re
+import rfc822
 import simpleimap
 import sqlite3
 import sys
@@ -52,6 +53,47 @@ defaults = {
             'mboxdash': False,
             'search': 'SEEN',
             }
+
+
+class lazyMaildir(mailbox.Maildir):
+    # Override the _refresh method, based on patch from
+    # http://bugs.python.org/issue1607951
+    # by A.M. Kuchling, 2009-05-02
+    def __init__(self, dirname, factory=rfc822.Message, create=True):
+        """Initialize a lazy Maildir instance."""
+        mailbox.Maildir.__init__(self, dirname, factory, create)
+        self._last_read = None  # Records the last time we read cur/new
+
+    def _refresh(self):
+        """Update table of contents mapping."""
+        new_mtime = os.path.getmtime(os.path.join(self._path, 'new'))
+        cur_mtime = os.path.getmtime(os.path.join(self._path, 'cur'))
+
+        if (self._last_read is not None and 
+            new_mtime <= self._last_read and cur_mtime <= self._last_read):
+            return
+
+        self._toc = {}
+        def update_dir (subdir):
+            path = os.path.join(self._path, subdir)
+            for entry in os.listdir(path):
+                p = os.path.join(path, entry)
+                if os.path.isdir(p):
+                    continue
+                uniq = entry.split(self.colon)[0]
+                self._toc[uniq] = os.path.join(subdir, entry)
+                
+        update_dir('new')
+        update_dir('cur')
+ 
+        # We record the current time - 1sec so that, if _refresh() is called
+        # again in the same second, we will always re-read the mailbox
+        # just in case it's been modified.  (os.path.mtime() only has
+        # 1sec resolution.)  This results in a few unnecessary re-reads
+        # when _refresh() is called multiple times in the same second,
+        # but once the clock ticks over, we will only re-read as needed.
+        now = int(time.time() - 1)
+        self._last_read = time.time() - 1
 
 
 def make_hash(size, date, msgid):
@@ -93,7 +135,7 @@ def check_message(conn, mbox, hash=None, uid=None):
         if isinstance(mbox, mailbox.mbox):
             # mailfile will be an int
             return int(row[0]) in mbox
-        elif isinstance(mbox, mailbox.Maildir):
+        elif isinstance(mbox, lazyMaildir):
             # mailfile will be a string; use mbox.get because it is faster
             return mbox.get(row[0])
         else:
@@ -124,7 +166,7 @@ def add_uid_to_hash(conn, hash, uid):
 
 def open_mailbox_maildir(directory, create=False):
     # There is a mailbox here.
-    return mailbox.Maildir(directory, create=create)
+    return lazyMaildir(directory, create=create)
 
 
 def open_mailbox_mbox(filename, create=False):
