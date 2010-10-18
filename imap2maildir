@@ -15,7 +15,7 @@ PEP-0008 compliance
   - Docstrings
 """
 
-version = "%prog 1.10.1 20100908"
+version = "%prog 1.10.2 20101018"
 
 import ConfigParser
 import email
@@ -26,6 +26,7 @@ import mailbox
 import optparse
 import os
 import re
+import rfc822
 import simpleimap
 import sqlite3
 import sys
@@ -50,8 +51,55 @@ defaults = {
             'turbo': True,
             'type': 'maildir',
             'mboxdash': False,
-            'search': 'OLD',
+            'search': 'SEEN',
             }
+
+class SeenMessagesCache(object):
+    # Cache for seen message UIDs and Hashes
+    def __init__(self):
+        self.uids = None
+        self.hashes = None
+
+
+class lazyMaildir(mailbox.Maildir):
+    # Override the _refresh method, based on patch from
+    # http://bugs.python.org/issue1607951
+    # by A.M. Kuchling, 2009-05-02
+    def __init__(self, dirname, factory=rfc822.Message, create=True):
+        """Initialize a lazy Maildir instance."""
+        mailbox.Maildir.__init__(self, dirname, factory, create)
+        self._last_read = None  # Records the last time we read cur/new
+
+    def _refresh(self):
+        """Update table of contents mapping."""
+        new_mtime = os.path.getmtime(os.path.join(self._path, 'new'))
+        cur_mtime = os.path.getmtime(os.path.join(self._path, 'cur'))
+
+        if (self._last_read is not None and 
+            new_mtime <= self._last_read and cur_mtime <= self._last_read):
+            return
+
+        self._toc = {}
+        def update_dir (subdir):
+            path = os.path.join(self._path, subdir)
+            for entry in os.listdir(path):
+                p = os.path.join(path, entry)
+                if os.path.isdir(p):
+                    continue
+                uniq = entry.split(self.colon)[0]
+                self._toc[uniq] = os.path.join(subdir, entry)
+                
+        update_dir('new')
+        update_dir('cur')
+ 
+        # We record the current time - 1sec so that, if _refresh() is called
+        # again in the same second, we will always re-read the mailbox
+        # just in case it's been modified.  (os.path.mtime() only has
+        # 1sec resolution.)  This results in a few unnecessary re-reads
+        # when _refresh() is called multiple times in the same second,
+        # but once the clock ticks over, we will only re-read as needed.
+        now = int(time.time() - 1)
+        self._last_read = time.time() - 1
 
 
 def make_hash(size, date, msgid):
@@ -78,29 +126,61 @@ def open_sql_session(filename):
     return conn
 
 
-def check_message(conn, mbox, hash=None, uid=None):
+def check_message(conn, mbox, hash=None, uid=None, seencache=None):
     """Checks to see if a given message exists."""
     c = conn.cursor()
+    if seencache:
+        if seencache.hashes is None:
+            # Populate the hash cache
+            log.debug("Populating hash cache...")
+            seencache.hashes = {}
+            c.execute('select hash,mailfile from seenmessages')
+            for result in c:
+                seencache.hashes[str(result[0])] = result[1]
+            log.debug("Hash cache: %i hashes" % len(seencache.hashes))
+        if seencache.uids is None:
+            # Populate the uid cache
+            log.debug("Populating uid cache...")
+            seencache.uids = {}
+            c.execute('select uid,mailfile from seenmessages')
+            for result in c:
+                seencache.uids[str(result[0])] = result[1]
+            log.debug("Uid cache: %i uids" % len(seencache.uids))
+ 
     if hash:
-        c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+        if str(hash) in seencache.hashes:
+            mailfile = seencache.hashes[hash]
+        else:
+            c.execute('select mailfile from seenmessages where hash=?', (hash,))
+            row = c.fetchone()
+            if row:
+                log.debug("Cache miss on hash %s" % hash)
+                mailfile = row[0]
+            else:
+                return False
     elif uid:
-        c.execute('select mailfile from seenmessages where uid=?', (uid, ))
+        if str(uid) in seencache.uids:
+            mailfile = seencache.uids[uid]
+        else:
+            c.execute('select mailfile from seenmessages where uid=?', (uid,))
+            row = c.fetchone()
+            if row:
+                log.debug("Cache miss on uid %s" % uid)
+                mailfile = row[0]
+            else:
+                return False
     else:
         return False
 
-    row = c.fetchone()
-    if row:
-        if isinstance(mbox, mailbox.mbox):
-            # mailfile will be an int
-            return int(row[0]) in mbox
-        elif isinstance(mbox, mailbox.Maildir):
-            # mailfile will be a string; use mbox.get because it is faster
-            return mbox.get(row[0])
-        else:
-            # uhh let's wing it
-            return row[0] in mbox
+    if isinstance(mbox, mailbox.mbox):
+        # mailfile will be an int
+        return int(mailfile) in mbox
+    elif isinstance(mbox, lazyMaildir):
+        # mailfile will be a string; use mbox.get because it is faster
+        return mbox.get(mailfile)
     else:
-        return False
+        # uhh let's wing it
+        return mailfile in mbox
 
 
 def store_hash(conn, hash, mailfile, uid):
@@ -124,7 +204,7 @@ def add_uid_to_hash(conn, hash, uid):
 
 def open_mailbox_maildir(directory, create=False):
     # There is a mailbox here.
-    return mailbox.Maildir(directory, create=create)
+    return lazyMaildir(directory, create=create)
 
 
 def open_mailbox_mbox(filename, create=False):
@@ -314,7 +394,7 @@ def parse_options(defaults):
 
 
 def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
-                            mboxdash=False, search=None):
+                            mboxdash=False, search=None, seencache=None):
     """Copies any messages that haven't yet been seen from imap to mbox.
 
     copy_messages_by_folder(folder=simpleimap.SimpleImapSSL().Folder(),
@@ -325,6 +405,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
                             turbo=boolean,
                             mboxdash=use '-' for mbox From line email?,
                             search=imap criteria (string),
+                            seencache=an object to cache seen messages,
 
     Returns: {'total': total length of folder,
               'handled': total messages handled,
@@ -345,18 +426,18 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
         # use this to check the local cache for the message before hitting
         # the outside world.  (TODO: Make this less suckful.)
         log.debug('TURBO MODE ENGAGED!')
-        folder.__turbo__(lambda uid: check_message(db, mbox, uid=uid))
+        folder.__turbo__(lambda uid: check_message(db, mbox, uid=uid, seencache=seencache))
     else:
         log.debug('Not using turbo mode...')
         folder.__turbo__(None)
 
     # Iterate through the message summary dicts for the folder.
-    for i in folder.Summaries(search):
+    for i in folder.Summaries(search=search):
         # i = {'uid': , 'msgid': , 'size': , 'date': }
         # Seen it yet?
         msghash = make_hash(i['size'], i['date'], i['msgid'])
 
-        if not check_message(db, mbox, hash=msghash):
+        if not check_message(db, mbox, hash=msghash, seencache=seencache):
             # Hash not found, copy it.
             message = imap.get_message_by_uid(i['uid'])
             if mboxdash:
@@ -370,7 +451,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
             log.debug(' NEW: ' + `i`)
             outdict['copied'] += 1
             outdict['copiedbytes'] += i['size']
-        elif not check_message(db, mbox, uid=i['uid']):
+        elif not check_message(db, mbox, uid=i['uid'], seencache=seencache):
             # UID is missing in the database (old version needs updated)
             log.debug('Adding uid %i to msghash %s' % (i['uid'], msghash))
             add_uid_to_hash(db, msghash, i['uid'])
@@ -424,6 +505,7 @@ def main():
             mbox = open_mailbox_mbox(options.destination, options.create)
             db = open_sql_session(options.destination + '.sqlite')
 
+        seencache = SeenMessagesCache()
         result = copy_messages_by_folder(folder=folder,
                                          db=db,
                                          imap=imap,
@@ -431,7 +513,8 @@ def main():
                                          limit=options.maxmessages,
                                          turbo=options.turbo,
                                          mboxdash=options.mboxdash,
-                                         search=options.search)
+                                         search=options.search,
+                                         seencache=seencache)
     except (KeyboardInterrupt, SystemExit):
         log.warning('Caught interrupt; clearing locks and safing database.')
         mbox.unlock()

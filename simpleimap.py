@@ -146,7 +146,7 @@ class __simplebase:
         return time.localtime(utc - zone)
 
     def get_messages_by_folder(self, folder, charset=None, search='ALL'):
-        ids = self.get_ids_by_folder(folder, search)
+        ids = self.get_ids_by_folder(folder, charset, search)
 
         for m in self.get_messages_by_ids(ids):
             yield m
@@ -319,6 +319,7 @@ class FolderClass:
         self.__charset = charset
         self.__parent = parent
         self.__keepaliver = self.__keepaliver_none__
+        self.__turbo = None
         self.host = parent.host
         self.folder = folder
 
@@ -357,7 +358,7 @@ class FolderClass:
     def Summaries(self, search='ALL'):
         if self.__turbo:
             self.__parent.select(self.__folder)
-            for u in self.Uids():
+            for u in self.Uids(search=search):
                 if not self.__turbo(u):
                     summ = self.__parent.get_summary_by_uid(u)
                     if summ:
