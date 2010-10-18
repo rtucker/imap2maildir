@@ -56,7 +56,7 @@ defaults = {
 
 class SeenMessagesCache(object):
     # Cache for seen message UIDs and Hashes
-    def __init__(self, db):
+    def __init__(self):
         self.uids = None
         self.hashes = None
 
