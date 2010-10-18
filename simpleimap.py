@@ -4,6 +4,7 @@
 
 import email
 import imaplib
+import logging
 import platform
 import re
 import time
@@ -252,8 +253,13 @@ class __simplebase:
         """
 
         # Retrieve the message from the server.
-        status, data = self.uid('FETCH', uid, 
+        try:
+            status, data = self.uid('FETCH', uid,
                               '(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
+        except:
+            logging.error("Caught exception in get_summary_by_uid")
+            logging.error("UID: %s" % uid)
+            raise
 
         if status != 'OK':
             return None
