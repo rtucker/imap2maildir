@@ -56,7 +56,7 @@ defaults = {
 
 class SeenMessagesCache(object):
     # Cache for seen message UIDs and Hashes
-    def __init__(self, db):
+    def __init__(self):
         self.uids = None
         self.hashes = None
 
@@ -132,34 +132,40 @@ def check_message(conn, mbox, hash=None, uid=None, seencache=None):
     if seencache:
         if seencache.hashes is None:
             # Populate the hash cache
+            log.debug("Populating hash cache...")
             seencache.hashes = {}
             c.execute('select hash,mailfile from seenmessages')
             for result in c:
-                seencache.hashes[result[0]] = result[1]
+                seencache.hashes[str(result[0])] = result[1]
+            log.debug("Hash cache: %i hashes" % len(seencache.hashes))
         if seencache.uids is None:
             # Populate the uid cache
+            log.debug("Populating uid cache...")
             seencache.uids = {}
             c.execute('select uid,mailfile from seenmessages')
             for result in c:
-                seencache.uids[result[0]] = result[1]
+                seencache.uids[str(result[0])] = result[1]
+            log.debug("Uid cache: %i uids" % len(seencache.uids))
  
     if hash:
-        if hash in seencache.hashes:
+        if str(hash) in seencache.hashes:
             mailfile = seencache.hashes[hash]
         else:
-            c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+            c.execute('select mailfile from seenmessages where hash=?', (hash,))
             row = c.fetchone()
             if row:
+                log.debug("Cache miss on hash %s" % hash)
                 mailfile = row[0]
             else:
                 return False
     elif uid:
-        if uid in seencache.uids:
+        if str(uid) in seencache.uids:
             mailfile = seencache.uids[uid]
         else:
-            c.execute('select mailfile from seenmessages where uid=?', (uid, ))
+            c.execute('select mailfile from seenmessages where uid=?', (uid,))
             row = c.fetchone()
             if row:
+                log.debug("Cache miss on uid %s" % uid)
                 mailfile = row[0]
             else:
                 return False
