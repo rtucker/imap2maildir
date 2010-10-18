@@ -1,3 +1,6 @@
+CHANGES IN 1.10.2
+ * Adding caching of uids and hashes to cut down on SQL queries.
+ 
 CHANGES IN 1.10.1
  * A search criteria can be specified, allowing you to download only SEEN
    messages, for example (and by default).  This may reduce problems with

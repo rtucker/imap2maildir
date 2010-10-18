@@ -15,7 +15,7 @@ PEP-0008 compliance
   - Docstrings
 """
 
-version = "%prog 1.10.1 20100908"
+version = "%prog 1.10.2 20101018"
 
 import ConfigParser
 import email
@@ -53,6 +53,10 @@ defaults = {
             'mboxdash': False,
             'search': 'SEEN',
             }
+
+# Globals for caching seen uids/hashes
+SEEN_MESSAGES_UIDS = None
+SEEN_MESSAGES_HASHES = None
 
 
 class lazyMaildir(mailbox.Maildir):
@@ -124,25 +128,51 @@ def check_message(conn, mbox, hash=None, uid=None):
     """Checks to see if a given message exists."""
     c = conn.cursor()
     if hash:
-        c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+        if SEEN_MESSAGES_HASHES is None:
+            # populate cache
+            SEEN_MESSAGES_HASHES = {}
+            c.execute('select hash,mailfile from seenmessages')
+            for result in c:
+                SEEN_MESSAGES_HASHES[result[0]] = result[1]
+
+        if hash in SEEN_MESSAGES_HASHES:
+            mailfile = SEEN_MESSAGES_HASHES[hash]
+        else:
+            c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+            row = c.fetchone()
+            if row:
+                mailfile = row[0]
+            else:
+                return False
     elif uid:
-        c.execute('select mailfile from seenmessages where uid=?', (uid, ))
+        if SEEN_MESSAGES_UIDS is None:
+            # populate cache
+            SEEN_MESSAGES_UIDS = {}
+            c.execute('select uid,mailfile from seenmessages')
+            for result in c:
+                SEEN_MESSAGES_UIDS[result[0]] = result[1]
+
+        if uid in SEEN_MESSAGES_UIDS:
+            mailfile = SEEN_MESSAGES_UIDS[uid]
+        else:
+            c.execute('select mailfile from seenmessages where uid=?', (uid, ))
+            row = c.fetchone()
+            if row:
+                mailfile = row[0]
+            else:
+                return False
     else:
         return False
 
-    row = c.fetchone()
-    if row:
-        if isinstance(mbox, mailbox.mbox):
-            # mailfile will be an int
-            return int(row[0]) in mbox
-        elif isinstance(mbox, lazyMaildir):
-            # mailfile will be a string; use mbox.get because it is faster
-            return mbox.get(row[0])
-        else:
-            # uhh let's wing it
-            return row[0] in mbox
+    if isinstance(mbox, mailbox.mbox):
+        # mailfile will be an int
+        return int(mailfile) in mbox
+    elif isinstance(mbox, lazyMaildir):
+        # mailfile will be a string; use mbox.get because it is faster
+        return mbox.get(mailfile)
     else:
-        return False
+        # uhh let's wing it
+        return mailfile in mbox
 
 
 def store_hash(conn, hash, mailfile, uid):
