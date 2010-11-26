@@ -30,6 +30,29 @@ class TestParseSummaryData(unittest.TestCase):
         for i in validkeys:
             self.assertEqual(validresult[i], result[i], "mismatch on %s" % i)
 
+    def testEmbeddedSubjectQuotedDoubleBackslash(self):
+        """
+        Tests a message with embedded double backslash inside quotes, in the Subject.
+
+        >>> imap.uid('FETCH', 120818, '(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
+
+        From https://github.com/rtucker/imap2maildir/issues#issue/10
+            "blablabla\\"
+        """
+        status, data = ('OK', ['29 (UID 120818 RFC822.SIZE 1638 INTERNALDATE "23-Nov-2010 17:29:05 +0000" ENVELOPE ("Tue, 23 Nov 2010 12:29:01 -0500" "test message \\"blablabla\\\\\\\\\\" test message" (("aaaa bbbbbb" NIL "ccccccc" "dddddddd-eeeeeee.ffffffff.ggg")) (("aaaa bbbbbb" NIL "ccccccc" "dddddddd-eeeeeee.ffffffff.ggg")) (("aaaa bbbbbb" NIL "ccccccc" "dddddddd-eeeeeee.ffffffff.ggg")) ((NIL NIL "ccccccc" "hhhhh.iii")) NIL NIL NIL "<E1PKwft-0002n9-EN@dddddddd-eeeeeee.ffffffff.ggg>"))'])
+
+        validresult = {'uid': 120818, 'envfrom': 'ccccccc@dddddddd-eeeeeee.ffffffff.ggg', 'msgid': '<E1PKwft-0002n9-EN@dddddddd-eeeeeee.ffffffff.ggg>', 'envdate': 'Tue, 23 Nov 2010 12:29:01 -0500', 'date': '23-Nov-2010 17:29:05 +0000', 'size': 1638}
+
+        result = self.imap.parse_summary_data(data)
+
+        validkeys = sorted(validresult.keys())
+        keys = sorted(result.keys())
+
+        self.assertEqual(validkeys, keys, "wrong keys in result")
+
+        for i in validkeys:
+            self.assertEqual(validresult[i], result[i], "mismatch on %s" % i)
+
     def testEmbeddedSubjectFiveBackslashes(self):
         """
         Tests a message with five (!) backslashes in the Subject.
