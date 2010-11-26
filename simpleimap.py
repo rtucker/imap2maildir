@@ -72,7 +72,7 @@ class __simplebase:
                     cur_result = level[-2]
                     del level[-1]
                 except IndexError:
-                    raise ValueError('Unexpected parenthesis at pos %d' % pos)
+                    raise ValueError('Unexpected parenthesis at pos %(pos)d text %(text)s' % {'pos':pos, 'text': text})
 
             pos += 1
 
