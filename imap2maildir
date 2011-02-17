@@ -49,15 +49,19 @@ defaults = {
             'turbo': True,
             'type': 'maildir',
             'mboxdash': False,
+            'dest_host': 'imap.gmail.com',
+            'dest_pass': False,
+            'dest_ssl': True,
+            'dest_port': False,
+            'sleep': 0,
             }
 
-
-def make_hash(size, date, msgid):
+def make_hash(size, date, msgid): #{{{
     # Returns a hash of a message given the size, date, and msgid thingies.
     return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
+#}}}
 
-
-def open_sql_session(filename):
+def open_sql_session(filename): #{{{
     # Opens a SQLite database, initializing it if required
     log.debug("Opening sqlite3 database '%s'" % filename)
     conn = sqlite3.connect(filename)
@@ -74,15 +78,15 @@ def open_sql_session(filename):
         c.execute("""alter table seenmessages add column uid integer""")
     conn.commit()
     return conn
+#}}}
 
-
-def check_message(conn, mbox, hash=None, uid=None):
+def check_message(conn, mbox, hash=None, uid=None): #{{{
     """Checks to see if a given message exists."""
     c = conn.cursor()
     if hash:
-        c.execute('select mailfile from seenmessages where hash=?', (hash, ))
+        c.execute('select * from seenmessages where hash=?', (hash, ))
     elif uid:
-        c.execute('select mailfile from seenmessages where uid=?', (uid, ))
+        c.execute('select * from seenmessages where uid=?', (uid, ))
     else:
         return False
 
@@ -90,18 +94,20 @@ def check_message(conn, mbox, hash=None, uid=None):
     if row:
         if isinstance(mbox, mailbox.mbox):
             # mailfile will be an int
-            return int(row[0]) in mbox
+            return int(row[1]) in mbox
         elif isinstance(mbox, mailbox.Maildir):
             # mailfile will be a string; use mbox.get because it is faster
-            return mbox.get(row[0])
+            return mbox.get(row[1])
+        elif isinstance(mbox, simpleimap.FolderClass):
+            return row[0]
         else:
             # uhh let's wing it
-            return row[0] in mbox
+            return row[1] in mbox
     else:
         return False
+#}}}
 
-
-def store_hash(conn, hash, mailfile, uid):
+def store_hash(conn, hash, mailfile, uid): #{{{
     # Given a database connection, hash, mailfile, and uid,
     # stashes it in the database
     c = conn.cursor()
@@ -111,35 +117,35 @@ def store_hash(conn, hash, mailfile, uid):
         log.debug('!!! Nuked duplicate hash %s' % hash)
     c.execute('insert into seenmessages values (?,?,?)', (hash, mailfile, uid))
     conn.commit()
+#}}}
 
-
-def add_uid_to_hash(conn, hash, uid):
+def add_uid_to_hash(conn, hash, uid): #{{{
     """Adds a uid to a hash that's missing its uid"""
     c = conn.cursor()
     c.execute('update seenmessages set uid = ? where hash = ?', (uid, hash))
     conn.commit()
+#}}}
 
-
-def open_mailbox_maildir(directory, create=False):
+def open_mailbox_maildir(directory, create=False): #{{{
     # There is a mailbox here.
     return mailbox.Maildir(directory, create=create)
+#}}}
 
-
-def open_mailbox_mbox(filename, create=False):
+def open_mailbox_mbox(filename, create=False): #{{{
     # Open a mbox file, lock for writing
     mbox = mailbox.mbox(filename, create=create)
     mbox.lock()
     return mbox
+#}}}
 
-
-def smells_like_maildir(dir):
+def smells_like_maildir(dir): #{{{
     # Quick check for the cur/tmp/new folders
     return os.path.exists(os.path.join(dir, 'cur')) and \
            os.path.exists(os.path.join(dir, 'new')) and \
            os.path.exists(os.path.join(dir, 'tmp'))
+#}}}
 
-
-def parse_config_file(defaults,configfile='imap2maildir.conf'):
+def parse_config_file(defaults,configfile='imap2maildir.conf'): #{{{
     # Parse config file, if exists.
     # Returns a tuple with a ConfigParser instance and either True or
     # False, depending on whether the config was read...
@@ -189,9 +195,9 @@ class FirstOptionParser(optparse.OptionParser):
 
         args = largs + rargs
         return self.check_values(values, args)
+#}}}
 
-
-def parse_options(defaults):
+def parse_options(defaults): #{{{
     # First round of command line parsing: look for a -c option.
     firstparser = FirstOptionParser(add_help_option=False)
     firstparser.set_defaults(configfile=defaults['configfile'])
@@ -208,7 +214,7 @@ def parse_options(defaults):
     description += "storage area.  Ideal for incremental backups of mail "
     description += "from free webmail providers, or perhaps as an "
     description += "alternative to fetchmail.  Supports mbox and maildir, "
-    description += "despite the name."
+    description += "as well as a second IMAP folder despite the name."
     if gotconfig:
         description = description + '\n\nConfiguration defaults read from \
             file "%s"' % firstoptions.configfile
@@ -227,7 +233,7 @@ def parse_options(defaults):
         iname = i[0]
         if i[1] == 'False': ivalue = False
         elif i[1] == 'True': ivalue = True
-        elif i[0] in ['port', 'debug', 'maxmessages']: ivalue = int(i[1])
+        elif i[0] in ['port', 'debug', 'maxmessages', 'dest_port']: ivalue = int(i[1])
         else: ivalue = i[1]
         parser.set_default(iname, ivalue)
 
@@ -235,7 +241,10 @@ def parse_options(defaults):
     required.add_option("-u", "--username", dest="username",
         help="Username for authentication to IMAP server", metavar="USERNAME")
     required.add_option("-d", "--destination", dest="destination",
-        help="Where to store the mail, e.g. ~/Backups/Gmail",
+        help="For maildir and mbox transfers, the local direction in which " +
+             "to store the messages (e.g. ~/Backups/Gmail).  For IMAP to " +
+             "IMAP transfers, what IMAP folder should the messages be " +
+             "placed in (e.g. [Gmail]/All Mail).",
         metavar="PATH")
     optional.add_option("-p", "--password", dest="password",
         help="Password for IMAP server.  Default: prompt user",
@@ -266,11 +275,35 @@ def parse_options(defaults):
     optional.add_option("-S", "--ssl", dest="ssl",
         help="Use SSL to connect, default: %default", action="store_true")
     optional.add_option("-t", "--type", dest="type", action="store",
-        help="Mailbox type.  Choice of: maildir, mbox.  Default: %default",
-        choices=['maildir', 'mbox'])
+        help="Mailbox type.  Choice of: maildir, mbox, imap.  Default: %default",
+        choices=['maildir', 'mbox', 'imap'])
     optional.add_option("--mboxdash", dest="mboxdash", action="store_true",
         help="Use - in the mbox From line instead of sender's address. " +
              "Default: %default")
+    optional.add_option("--dest_host", dest="dest_host",
+        help="For IMAP to IMAP transfers, what host will receive mail.")
+    optional.add_option("--dest_user", dest="dest_user",
+        help="For IMAP to IMAP transfers, what username should be used to " +
+             "log in to the receiving host.")
+    optional.add_option("--dest_pass", dest="dest_pass",
+        help="For IMAP to IMAP transfers, what password should be used to " +
+             "log in to the receiving host.  Default: prompt user",
+        metavar="DEST_PASS")
+    optional.add_option("--dest_port", dest="dest_port",
+        help="For IMAP to IMAP transfers, what port should be used on the " +
+             "receiving host.  Default: 993 (SSL), 143 (clear)",
+        metavar="DEST_PORT")
+    optional.add_option("--dest_ssl",  dest="dest_ssl",  action="store_true",
+        help="For IMAP to IMAP transfers, use SSL to connect to the " +
+             "receiving host. Default: %default")
+    optional.add_option("-s", "--sleep", dest="sleep",
+        help="For IMAP to IMAP transfers, the number of seconds to sleep " +
+             "between uploading messages. Helpful in circumventing Gmail's " +
+             "1 msg/sec limit. Default: %default",
+        metavar="SLEEP", type="int")
+    optional.add_option("--xfer_name",  dest="xfer_name",
+        help="For IMAP to IMAP transfers, a unique string identifying the " +
+             "transfer, so the databases can be differentiated.")
 
     # Parse
     parser.add_option_group(required)
@@ -283,7 +316,7 @@ def parse_options(defaults):
     if not options.destination:
         parser.error("Must specify a destination directory (-d/--destination).")
     if not os.path.exists(options.destination):
-        if options.create:
+        if (options.create or options.type == 'imap'):
             pass
         else:
             parser.error("Destination '%s' does not exist.  Use --create."
@@ -293,7 +326,13 @@ def parse_options(defaults):
         parser.error("Directory '%s' exists, but it isn't a maildir."
                      % options.destination)
     if not options.password:
-        options.password = getpass.getpass()
+        options.password = getpass.getpass(prompt="IMAP password (source): ")
+
+    if options.type == 'imap':
+        if not options.dest_user:
+            parser.error("Must specify destination user for IMAP to IMAP transfer (--dest_user).")
+        elif not options.dest_host:
+            options.dest_pass = getpass.getpass(prompt="IMAP password (destination): ")
 
     # Set up debugging
     if options.debug == 0:
@@ -304,10 +343,9 @@ def parse_options(defaults):
         log.setLevel(logging.DEBUG)
 
     return options
+#}}}
 
-
-def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
-                            mboxdash=False):
+def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False, mboxdash=False, dest_imap=None, sleep=defaults['sleep']): #{{{
     """Copies any messages that haven't yet been seen from imap to mbox.
 
     copy_messages_by_folder(folder=simpleimap.SimpleImapSSL().Folder(),
@@ -326,9 +364,14 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
 
     outdict = {'turbo': 0, 'handled': 0, 'copied': 0, 'copiedbytes': 0, 'lastuid': 0}
     outdict['total'] = len(folder)
-    log.info("Synchronizing %i messages from %s:%s to %s..." % (outdict['total'], folder.host, folder.folder, mbox._path))
+    if isinstance(mbox, simpleimap.FolderClass):
+        mbox_path = mbox.host + ":" + mbox.folder
+    else:
+        mbox_path = mbox._path
 
-    msgpath = os.path.join(mbox._path, 'new')
+    log.info("Synchronizing %i messages from %s:%s to %s..." % (outdict['total'], folder.host, folder.folder, mbox_path))
+
+    #msgpath = os.path.join(mbox._path, 'new')
 
     if turbo:
         # This will pass the check_message function and some useful cargo
@@ -340,6 +383,8 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
     else:
         log.debug('Not using turbo mode...')
         folder.__turbo__(None)
+
+
 
     # Iterate through the message summary dicts for the folder.
     for i in folder.Summaries():
@@ -356,7 +401,13 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
                 envfrom = i['envfrom']
             message.set_unixfrom("From %s %s" % (envfrom,
                             time.asctime(imap.parseInternalDate(i['date']))))
-            msgfile = mbox.add(message)
+
+            if isinstance(mbox, simpleimap.FolderClass):
+                dest_imap.append(mbox.folder, None, None, str(message))
+                msgfile = msghash
+                time.sleep(sleep)
+            else:
+                msgfile = mbox.add(message)
             store_hash(db, msghash, msgfile, i['uid'])
             log.debug(' NEW: ' + `i`)
             outdict['copied'] += 1
@@ -385,15 +436,15 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
     # Make sure this gets updated...
     outdict['turbo'] = folder.turbocounter()
     return outdict
+#}}}
 
-
-def main():
+def main(): #{{{
     log.debug('Hello.  Version %s' % version)
     # Parse the command line and config file
     options = parse_options(defaults)
 
     # Check to make sure the mailbox type is valid (probably redundant)
-    if options.type not in ['maildir', 'mbox']:
+    if options.type not in ['maildir', 'mbox', 'imap']:
         raise ValueError("No valid mailbox type specified")
 
     # Connect to IMAP server
@@ -411,30 +462,62 @@ def main():
         if options.type == 'maildir':
             mbox = open_mailbox_maildir(options.destination, options.create)
             db = open_sql_session(os.path.join(options.destination, '.imap2maildir.sqlite'))
+            dest_imap=None
         elif options.type == 'mbox':
             mbox = open_mailbox_mbox(options.destination, options.create)
             db = open_sql_session(options.destination + '.sqlite')
+            dest_imap=None
+        elif options.type == 'imap':
+            dest_imapserver = simpleimap.Server(hostname = options.dest_host,
+                                                username = options.dest_user,
+                                                password = options.dest_pass,
+                                                port = options.dest_port,
+                                                ssl = options.dest_ssl)
+            dest_imap = dest_imapserver.Get()
+            mbox = dest_imap.Folder(folder=options.destination)
+            mbox.__keepaliver__(dest_imapserver.Keepalive)
+            db = open_sql_session(options.xfer_name + '.imap2maildir.sqlite')
+
+            # If this is the first time we've run this transfer, initialize the
+            # DB with hashes of the messages that already exist on the server
+            # in order to avoid creating duplicates:
+            c = db.cursor()
+            c.execute('select uid from seenmessages')
+            if len(c.fetchall()) == 0:
+                num2hash = len(mbox)
+                log.info("Initializing DB with %i seen messages from %s:%s" % (num2hash, mbox.host, mbox.folder))
+                mbox.__turbo__(None)
+                hashed = 0
+                for i in mbox.Summaries():
+                    msghash = make_hash(i['size'], i['date'], i['msgid'])
+                    store_hash(db, msghash, msghash, i['uid'])
+                    hashed += 1
+                    if hashed % 100 == 0:
+                        log.info("Hashed %i / %i" % (hashed, num2hash) )
+                        
 
         result = copy_messages_by_folder(folder=folder, db=db, imap=imap,
                                      mbox=mbox, limit=options.maxmessages,
                                      turbo=options.turbo,
-                                     mboxdash=options.mboxdash)
+                                     mboxdash=options.mboxdash,
+                                     dest_imap=dest_imap, sleep=options.sleep)
     except (KeyboardInterrupt, SystemExit):
         log.warning('Caught interrupt; clearing locks and safing database.')
-        mbox.unlock()
-        db.rollback()
+        #mbox.unlock()
+        #db.rollback()
         raise
     except:
         log.warning('Exception!  Clearing locks and safing database.')
-        mbox.unlock()
-        db.rollback()
+        #mbox.unlock()
+        #db.rollback()
         raise
 
     # Unlock the mailbox if locked.
-    mbox.unlock()
+    #mbox.unlock()
 
     # Print results.
     log.info('FINISHED: Turboed %(turbo)i, handled %(handled)i, copied %(copied)i (%(copiedbytes)i bytes), last UID was %(lastuid)i' % result)
+#}}}
 
 if __name__ == "__main__":
     main()
