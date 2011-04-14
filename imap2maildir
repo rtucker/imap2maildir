@@ -58,6 +58,9 @@ class SeenMessagesCache(object):
     """ Cache for seen message UIDs and Hashes
     """
     def __init__(self):
+        """ Constructor
+        """
+
         self.uids = None
         self.hashes = None
 
@@ -84,6 +87,9 @@ class lazyMaildir(mailbox.Maildir):
 
         self._toc = {}
         def update_dir (subdir):
+            """ update_dir
+            """
+
             path = os.path.join(self._path, subdir)
             for entry in os.listdir(path):
                 p = os.path.join(path, entry)
@@ -230,13 +236,13 @@ def open_mailbox_mbox(filename, create=False):
     return mbox
 
 
-def smells_like_maildir(dir):
+def smells_like_maildir(working_dir):
     """ Quick check for the cur/tmp/new folders
     """
 
-    return os.path.exists(os.path.join(dir, 'cur')) and \
-           os.path.exists(os.path.join(dir, 'new')) and \
-           os.path.exists(os.path.join(dir, 'tmp'))
+    return os.path.exists(os.path.join(working_dir, 'cur')) and \
+           os.path.exists(os.path.join(working_dir, 'new')) and \
+           os.path.exists(os.path.join(working_dir, 'tmp'))
 
 
 def parse_config_file(defaults,configfile='imap2maildir.conf'):

@@ -1,6 +1,7 @@
-# simpleimap.py, originally from http://p.linode.com/2693 on 2009/07/22
-# Copyright (c) 2009 Timothy J Fontaine <tjfontaine@gmail.com>
-# Copyright (c) 2009 Ryan S. Tucker <rtucker@gmail.com>
+""" simpleimap.py, originally from http://p.linode.com/2693 on 2009/07/22
+Copyright (c) 2009 Timothy J Fontaine <tjfontaine@gmail.com>
+Copyright (c) 2009 Ryan S. Tucker <rtucker@gmail.com>
+"""
 
 import email
 import imaplib
@@ -10,6 +11,9 @@ import re
 import time
 
 class __simplebase:
+    """ __simple base
+    """
+
     def parseFetch(self, text):
         """Given a string (e.g. '1 (ENVELOPE...'), breaks it down into
         a useful format.
@@ -86,6 +90,9 @@ class __simplebase:
         return replydict
 
     def __listdictor(self, inlist):
+        """ __listdictor
+        """
+
         outdict = {}
 
         for i in xrange(0,len(inlist),2):
@@ -146,12 +153,18 @@ class __simplebase:
         return time.localtime(utc - zone)
 
     def get_messages_by_folder(self, folder, charset=None, search='ALL'):
+        """ get messages by folder
+        """
+
         ids = self.get_ids_by_folder(folder, charset, search)
 
         for m in self.get_messages_by_ids(ids):
             yield m
 
     def get_ids_by_folder(self, folder, charset=None, search='ALL'):
+        """ get ids by folder
+        """
+
         self.select(folder)
         status, data = self.search(charset, search)
         if status != 'OK':
@@ -160,6 +173,9 @@ class __simplebase:
         return data[0].split()
 
     def get_uids_by_folder(self, folder, charset=None, search='ALL'):
+        """ get_uids by folders
+        """
+
         self.select(folder)
         status, data = self.uid('SEARCH', charset, search)
         if status != 'OK':
@@ -168,14 +184,23 @@ class __simplebase:
         return data[0].split()
 
     def get_summaries_by_folder(self, folder, charset=None, search='ALL'):
+        """ get summaries by folder
+        """
+
         for i in self.get_uids_by_folder(folder, charset, search):
             yield self.get_summary_by_uid(int(i))
 
     def get_messages_by_ids(self, ids):
+        """ get messages by ids
+        """
+
         for i in ids:
             yield self.get_message_by_id(int(i))
 
     def get_message_by_id(self, id):
+        """ get_message_by_id
+        """
+
         status, data = self.fetch(int(id), '(RFC822)')
 
         if status != 'OK':
@@ -184,10 +209,16 @@ class __simplebase:
         return email.message_from_string(data[0][1])
 
     def get_messages_by_uids(self, uids):
+        """ get messages by uids
+        """
+
         for i in uids:
             yield self.get_message_by_uid(int(i))
 
     def get_message_by_uid(self, uid):
+        """ get_message_by_uid
+        """
+
         status, data = self.uid('FETCH', uid, '(RFC822)')
 
         if status != 'OK':
@@ -196,6 +227,9 @@ class __simplebase:
         return email.message_from_string(data[0][1])
 
     def get_summaries_by_ids(self, ids):
+        """ get summaries by ids
+        """
+
         for i in ids:
             yield self.get_summary_by_id(int(i))
 
@@ -219,6 +253,9 @@ class __simplebase:
         return self.parse_summary_data(data)
 
     def get_uids_by_ids(self, ids):
+        """ get uids by ids
+        """
+
         for i in ids:
             yield self.get_uid_by_id(int(i))
 
@@ -238,6 +275,9 @@ class __simplebase:
         return None
 
     def get_summaries_by_uids(self, uids):
+        """ get summaries by uids
+        """
+
         for i in uids:
             yield self.get_summary_by_uid(int(i))
 
@@ -324,6 +364,9 @@ class FolderClass:
         self.folder = folder
 
     def __len__(self):
+        """ __len__
+        """
+
         status, data = self.__parent.select(self.__folder)
         if status != 'OK':
             raise Exception(data)
@@ -331,9 +374,15 @@ class FolderClass:
         return int(data[0])
 
     def __keepaliver__(self, keepaliver):
+        """ __keep aliver
+        """
+
         self.__keepaliver = keepaliver
 
     def __keepaliver_none__(self):
+        """ __keepaliver_none__
+        """
+
         pass
 
     def __turbo__(self, turbofunction):
@@ -343,6 +392,9 @@ class FolderClass:
         self.__turbocounter = 0
 
     def turbocounter(self, reset=False):
+        """ turbocounter
+        """
+
         if self.__turbo:
             oldvalue = self.__turbocounter
             if reset:
@@ -352,10 +404,16 @@ class FolderClass:
             return 0
 
     def Messages(self, search='ALL'):
+        """ Messsages
+        """
+
         for m in self.__parent.get_messages_by_folder(self.__folder, self.__charset, search):
             yield m
 
     def Summaries(self, search='ALL'):
+        """ Summaries
+        """
+
         if self.__turbo:
             self.__parent.select(self.__folder)
             for u in self.Uids(search=search):
@@ -372,16 +430,26 @@ class FolderClass:
                 yield s
 
     def Ids(self, search='ALL'):
+        """ Ids
+        """
         for i in self.__parent.get_ids_by_folder(self.__folder, self.__charset, search):
             yield i
 
     def Uids(self, search='ALL'):
+        """ Uids
+        """
+
         for u in self.__parent.get_uids_by_folder(self.__folder, self.__charset, search):
             yield u
 
 class Server:
-    """Class for instantiating a server instance"""
+    """ Class for instantiating a server instance
+    """
+
     def __init__(self, hostname=None, username=None, password=None, port=None, ssl=True):
+        """ Constructor
+        """
+
         self.__hostname = hostname
         self.__username = username
         self.__password = password
@@ -400,6 +468,9 @@ class Server:
             self.Connect()
 
     def Connect(self):
+        """ Connect
+        """
+
         if self.__ssl:
             self.__connection = SimpleImapSSL(self.__hostname, self.__port)
         else:
@@ -408,6 +479,9 @@ class Server:
         self.__connection.login(self.__username, self.__password)
 
     def Get(self):
+        """ Get
+        """
+
         return self.__connection
 
     def Keepalive(self):
@@ -417,9 +491,15 @@ class Server:
             self.__lastnoop = time.time()
 
 class SimpleImap(imaplib.IMAP4, __simplebase):
+    """ Simple Imap
+    """
+
     pass
 
 class SimpleImapSSL(imaplib.IMAP4_SSL, __simplebase):
+    """ Simple Imap SSL
+    """
+
     if platform.python_version().startswith('2.6.'):
         def readline(self):
             """Read line from remote.  Overrides built-in method to fix

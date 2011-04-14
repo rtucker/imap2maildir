@@ -1,13 +1,18 @@
 #!/usr/bin/python
 
-# Runs various tests on stuff.
+""" Runs various tests on stuff.
+"""
 
 import simpleimap
 import unittest
 
 class TestParseSummaryData(unittest.TestCase):
+    """ Test Parse Summary Data
+    """
+
     def setUp(self):
-        # create an instance
+        """ create an instance
+        """
         self.imap = simpleimap.SimpleImapSSL('imap.gmail.com')
 
     def testEmbeddedSubjectQuotes(self):
