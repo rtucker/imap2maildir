@@ -55,16 +55,19 @@ defaults = {
             }
 
 class SeenMessagesCache(object):
-    # Cache for seen message UIDs and Hashes
+    """ Cache for seen message UIDs and Hashes
+    """
     def __init__(self):
         self.uids = None
         self.hashes = None
 
 
 class lazyMaildir(mailbox.Maildir):
-    # Override the _refresh method, based on patch from
-    # http://bugs.python.org/issue1607951
-    # by A.M. Kuchling, 2009-05-02
+    """ Override the _refresh method, based on patch from
+    http://bugs.python.org/issue1607951
+    by A.M. Kuchling, 2009-05-02
+    """
+
     def __init__(self, dirname, factory=rfc822.Message, create=True):
         """Initialize a lazy Maildir instance."""
         mailbox.Maildir.__init__(self, dirname, factory, create)
@@ -103,12 +106,15 @@ class lazyMaildir(mailbox.Maildir):
 
 
 def make_hash(size, date, msgid):
-    # Returns a hash of a message given the size, date, and msgid thingies.
+    """ Returns a hash of a message given the size, date, and msgid thingies.
+    """
     return hashlib.sha1('%i::%s::%s' % (size, date, msgid)).hexdigest()
 
 
 def open_sql_session(filename):
-    # Opens a SQLite database, initializing it if required
+    """ Opens a SQLite database, initializing it if required
+    """
+
     log.debug("Opening sqlite3 database '%s'" % filename)
     conn = sqlite3.connect(filename)
     c = conn.cursor()
@@ -127,7 +133,9 @@ def open_sql_session(filename):
 
 
 def check_message(conn, mbox, hash=None, uid=None, seencache=None):
-    """Checks to see if a given message exists."""
+    """ Checks to see if a given message exists.
+    """
+
     c = conn.cursor()
     if seencache:
         if seencache.hashes is None:
@@ -196,35 +204,45 @@ def store_hash(conn, hash, mailfile, uid):
 
 
 def add_uid_to_hash(conn, hash, uid):
-    """Adds a uid to a hash that's missing its uid"""
+    """ Adds a uid to a hash that's missing its uid
+    """
+
     c = conn.cursor()
     c.execute('update seenmessages set uid = ? where hash = ?', (uid, hash))
     conn.commit()
 
 
 def open_mailbox_maildir(directory, create=False):
-    # There is a mailbox here.
+    """ There is a mailbox here.
+    """
+
     return lazyMaildir(directory, create=create)
 
 
 def open_mailbox_mbox(filename, create=False):
-    # Open a mbox file, lock for writing
+    """ Open a mbox file, lock for writing
+    """
+
     mbox = mailbox.mbox(filename, create=create)
     mbox.lock()
     return mbox
 
 
 def smells_like_maildir(dir):
-    # Quick check for the cur/tmp/new folders
+    """ Quick check for the cur/tmp/new folders
+    """
+
     return os.path.exists(os.path.join(dir, 'cur')) and \
            os.path.exists(os.path.join(dir, 'new')) and \
            os.path.exists(os.path.join(dir, 'tmp'))
 
 
 def parse_config_file(defaults,configfile='imap2maildir.conf'):
-    # Parse config file, if exists.
-    # Returns a tuple with a ConfigParser instance and either True or
-    # False, depending on whether the config was read...
+    """ Parse config file, if exists.
+    Returns a tuple with a ConfigParser instance and either True or
+    False, depending on whether the config was read...
+    """
+
     config = ConfigParser.ConfigParser(defaults)
     if config.read(configfile):
         log.debug('Reading config from ' + configfile)
@@ -235,9 +253,11 @@ def parse_config_file(defaults,configfile='imap2maildir.conf'):
 
 
 class FirstOptionParser(optparse.OptionParser):
-    # Adjusts parse_args so it won't complain too heavily about
-    # options that don't exist.
-    # Lifted lock, stock, and barrel from /usr/lib/python2.6/optparse.py
+    """ Adjusts parse_args so it won't complain too heavily about
+    options that don't exist.
+    Lifted lock, stock, and barrel from /usr/lib/python2.6/optparse.py
+    """
+    
     def parse_args(self, args=None, values=None):
         """
         parse_args(args : [string] = sys.argv[1:],
@@ -252,6 +272,7 @@ class FirstOptionParser(optparse.OptionParser):
         your option values) and 'args' is the list of arguments left
         over after parsing options.
         """
+
         rargs = self._get_args(args)
         if values is None:
             values = self.get_default_values()
@@ -274,7 +295,9 @@ class FirstOptionParser(optparse.OptionParser):
 
 
 def parse_options(defaults):
-    # First round of command line parsing: look for a -c option.
+    """ First round of command line parsing: look for a -c option.
+    """
+
     firstparser = FirstOptionParser(add_help_option=False)
     firstparser.set_defaults(configfile=defaults['configfile'])
     firstparser.add_option("-c", "--config-file", dest="configfile")
@@ -478,6 +501,9 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
 
 
 def main():
+    """ main loop
+    """
+    
     log.debug('Hello.  Version %s' % version)
     # Parse the command line and config file
     options = parse_options(defaults)
