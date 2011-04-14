@@ -1,0 +1,804 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module simpleimap</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>simpleimap</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:///F:/development/portablegit/imap2maildir/simpleimap.py">f:\development\portablegit\imap2maildir\simpleimap.py</a></font></td></tr></table>
+    <p><tt>simpleimap.py,&nbsp;originally&nbsp;from&nbsp;<a href="http://p.linode.com/2693">http://p.linode.com/2693</a>&nbsp;on&nbsp;2009/07/22<br>
+Copyright&nbsp;(c)&nbsp;2009&nbsp;Timothy&nbsp;J&nbsp;Fontaine&nbsp;&lt;tjfontaine@gmail.com&gt;<br>
+Copyright&nbsp;(c)&nbsp;2009&nbsp;Ryan&nbsp;S.&nbsp;Tucker&nbsp;&lt;rtucker@gmail.com&gt;</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="email.html">email</a><br>
+<a href="imaplib.html">imaplib</a><br>
+</td><td width="25%" valign=top><a href="logging.html">logging</a><br>
+<a href="platform.html">platform</a><br>
+</td><td width="25%" valign=top><a href="re.html">re</a><br>
+<a href="time.html">time</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="imaplib.html#IMAP4">imaplib.IMAP4</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="simpleimap.html#SimpleImap">SimpleImap</a>(<a href="imaplib.html#IMAP4">imaplib.IMAP4</a>, <a href="simpleimap.html#__simplebase">__simplebase</a>)
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="imaplib.html#IMAP4_SSL">imaplib.IMAP4_SSL</a>(<a href="imaplib.html#IMAP4">imaplib.IMAP4</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="simpleimap.html#SimpleImapSSL">SimpleImapSSL</a>(<a href="imaplib.html#IMAP4_SSL">imaplib.IMAP4_SSL</a>, <a href="simpleimap.html#__simplebase">__simplebase</a>)
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="simpleimap.html#FolderClass">FolderClass</a>
+</font></dt><dt><font face="helvetica, arial"><a href="simpleimap.html#Server">Server</a>
+</font></dt><dt><font face="helvetica, arial"><a href="simpleimap.html#__simplebase">__simplebase</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="simpleimap.html#SimpleImap">SimpleImap</a>(<a href="imaplib.html#IMAP4">imaplib.IMAP4</a>, <a href="simpleimap.html#__simplebase">__simplebase</a>)
+</font></dt><dt><font face="helvetica, arial"><a href="simpleimap.html#SimpleImapSSL">SimpleImapSSL</a>(<a href="imaplib.html#IMAP4_SSL">imaplib.IMAP4_SSL</a>, <a href="simpleimap.html#__simplebase">__simplebase</a>)
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="FolderClass">class <strong>FolderClass</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;for&nbsp;instantiating&nbsp;a&nbsp;folder&nbsp;instance.<br>
+&nbsp;<br>
+TODO:&nbsp;Trap&nbsp;exceptions&nbsp;like:<br>
+ssl.SSLError:&nbsp;[Errno&nbsp;8]&nbsp;_ssl.c:1325:&nbsp;EOF&nbsp;occurred&nbsp;in&nbsp;violation&nbsp;of&nbsp;protocol<br>
+by&nbsp;trying&nbsp;to&nbsp;reconnect&nbsp;to&nbsp;the&nbsp;server.<br>
+(Raised&nbsp;up&nbsp;via&nbsp;get_summary_by_uid&nbsp;in&nbsp;Summaries&nbsp;when&nbsp;IMAP&nbsp;server&nbsp;boogers.)<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="FolderClass-Ids"><strong>Ids</strong></a>(self, search<font color="#909090">='ALL'</font>)</dt><dd><tt>Ids</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-Messages"><strong>Messages</strong></a>(self, search<font color="#909090">='ALL'</font>)</dt><dd><tt>Messsages</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-Summaries"><strong>Summaries</strong></a>(self, search<font color="#909090">='ALL'</font>)</dt><dd><tt>Summaries</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-Uids"><strong>Uids</strong></a>(self, search<font color="#909090">='ALL'</font>)</dt><dd><tt>Uids</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-__init__"><strong>__init__</strong></a>(self, parent, folder<font color="#909090">='INBOX'</font>, charset<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="FolderClass-__keepaliver__"><strong>__keepaliver__</strong></a>(self, keepaliver)</dt><dd><tt>__keep&nbsp;aliver</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-__keepaliver_none__"><strong>__keepaliver_none__</strong></a>(self)</dt><dd><tt>__keepaliver_none__</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-__len__"><strong>__len__</strong></a>(self)</dt><dd><tt>__len__</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-__turbo__"><strong>__turbo__</strong></a>(self, turbofunction)</dt><dd><tt>Calls&nbsp;turbofunction(uid)&nbsp;for&nbsp;every&nbsp;uid,&nbsp;only&nbsp;yielding&nbsp;those<br>
+where&nbsp;turbofunction&nbsp;returns&nbsp;False.&nbsp;&nbsp;Set&nbsp;to&nbsp;None&nbsp;to&nbsp;disable.</tt></dd></dl>
+
+<dl><dt><a name="FolderClass-turbocounter"><strong>turbocounter</strong></a>(self, reset<font color="#909090">=False</font>)</dt><dd><tt>turbocounter</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Server">class <strong>Server</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;for&nbsp;instantiating&nbsp;a&nbsp;server&nbsp;instance<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Server-Connect"><strong>Connect</strong></a>(self)</dt><dd><tt>Connect</tt></dd></dl>
+
+<dl><dt><a name="Server-Get"><strong>Get</strong></a>(self)</dt><dd><tt>Get</tt></dd></dl>
+
+<dl><dt><a name="Server-Keepalive"><strong>Keepalive</strong></a>(self)</dt><dd><tt>Call&nbsp;me&nbsp;occasionally&nbsp;just&nbsp;to&nbsp;make&nbsp;sure&nbsp;everything's&nbsp;OK...</tt></dd></dl>
+
+<dl><dt><a name="Server-__init__"><strong>__init__</strong></a>(self, hostname<font color="#909090">=None</font>, username<font color="#909090">=None</font>, password<font color="#909090">=None</font>, port<font color="#909090">=None</font>, ssl<font color="#909090">=True</font>)</dt><dd><tt>Constructor</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SimpleImap">class <strong>SimpleImap</strong></a>(<a href="imaplib.html#IMAP4">imaplib.IMAP4</a>, <a href="simpleimap.html#__simplebase">__simplebase</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Simple&nbsp;Imap<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="simpleimap.html#SimpleImap">SimpleImap</a></dd>
+<dd><a href="imaplib.html#IMAP4">imaplib.IMAP4</a></dd>
+<dd><a href="simpleimap.html#__simplebase">__simplebase</a></dd>
+</dl>
+<hr>
+Methods inherited from <a href="imaplib.html#IMAP4">imaplib.IMAP4</a>:<br>
+<dl><dt><a name="SimpleImap-__getattr__"><strong>__getattr__</strong></a>(self, attr)</dt></dl>
+
+<dl><dt><a name="SimpleImap-__init__"><strong>__init__</strong></a>(self, host<font color="#909090">=''</font>, port<font color="#909090">=143</font>)</dt></dl>
+
+<dl><dt><a name="SimpleImap-append"><strong>append</strong></a>(self, mailbox, flags, date_time, message)</dt><dd><tt>Append&nbsp;message&nbsp;to&nbsp;named&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-append">append</a>(mailbox,&nbsp;flags,&nbsp;date_time,&nbsp;message)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All&nbsp;args&nbsp;except&nbsp;`message'&nbsp;can&nbsp;be&nbsp;None.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-authenticate"><strong>authenticate</strong></a>(self, mechanism, authobject)</dt><dd><tt>Authenticate&nbsp;command&nbsp;-&nbsp;requires&nbsp;response&nbsp;processing.<br>
+&nbsp;<br>
+'mechanism'&nbsp;specifies&nbsp;which&nbsp;authentication&nbsp;mechanism&nbsp;is&nbsp;to<br>
+be&nbsp;used&nbsp;-&nbsp;it&nbsp;must&nbsp;appear&nbsp;in&nbsp;&lt;instance&gt;.capabilities&nbsp;in&nbsp;the<br>
+form&nbsp;AUTH=&lt;mechanism&gt;.<br>
+&nbsp;<br>
+'authobject'&nbsp;must&nbsp;be&nbsp;a&nbsp;callable&nbsp;object:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data&nbsp;=&nbsp;authobject(response)<br>
+&nbsp;<br>
+It&nbsp;will&nbsp;be&nbsp;called&nbsp;to&nbsp;process&nbsp;server&nbsp;continuation&nbsp;responses.<br>
+It&nbsp;should&nbsp;return&nbsp;data&nbsp;that&nbsp;will&nbsp;be&nbsp;encoded&nbsp;and&nbsp;sent&nbsp;to&nbsp;server.<br>
+It&nbsp;should&nbsp;return&nbsp;None&nbsp;if&nbsp;the&nbsp;client&nbsp;abort&nbsp;response&nbsp;'*'&nbsp;should<br>
+be&nbsp;sent&nbsp;instead.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-capability"><strong>capability</strong></a>(self)</dt><dd><tt>(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-capability">capability</a>()<br>
+Fetch&nbsp;capabilities&nbsp;list&nbsp;from&nbsp;server.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-check"><strong>check</strong></a>(self)</dt><dd><tt>Checkpoint&nbsp;mailbox&nbsp;on&nbsp;server.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-check">check</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-close"><strong>close</strong></a>(self)</dt><dd><tt>Close&nbsp;currently&nbsp;selected&nbsp;mailbox.<br>
+&nbsp;<br>
+Deleted&nbsp;messages&nbsp;are&nbsp;removed&nbsp;from&nbsp;writable&nbsp;mailbox.<br>
+This&nbsp;is&nbsp;the&nbsp;recommended&nbsp;command&nbsp;before&nbsp;'LOGOUT'.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-close">close</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-copy"><strong>copy</strong></a>(self, message_set, new_mailbox)</dt><dd><tt>Copy&nbsp;'message_set'&nbsp;messages&nbsp;onto&nbsp;end&nbsp;of&nbsp;'new_mailbox'.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-copy">copy</a>(message_set,&nbsp;new_mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-create"><strong>create</strong></a>(self, mailbox)</dt><dd><tt>Create&nbsp;new&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-create">create</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-delete"><strong>delete</strong></a>(self, mailbox)</dt><dd><tt>Delete&nbsp;old&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-delete">delete</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-deleteacl"><strong>deleteacl</strong></a>(self, mailbox, who)</dt><dd><tt>Delete&nbsp;the&nbsp;ACLs&nbsp;(remove&nbsp;any&nbsp;rights)&nbsp;set&nbsp;for&nbsp;who&nbsp;on&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-deleteacl">deleteacl</a>(mailbox,&nbsp;who)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-expunge"><strong>expunge</strong></a>(self)</dt><dd><tt>Permanently&nbsp;remove&nbsp;deleted&nbsp;items&nbsp;from&nbsp;selected&nbsp;mailbox.<br>
+&nbsp;<br>
+Generates&nbsp;'EXPUNGE'&nbsp;response&nbsp;for&nbsp;each&nbsp;deleted&nbsp;message.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-expunge">expunge</a>()<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;list&nbsp;of&nbsp;'EXPUNGE'd&nbsp;message&nbsp;numbers&nbsp;in&nbsp;order&nbsp;received.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-fetch"><strong>fetch</strong></a>(self, message_set, message_parts)</dt><dd><tt>Fetch&nbsp;(parts&nbsp;of)&nbsp;messages.<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-fetch">fetch</a>(message_set,&nbsp;message_parts)<br>
+&nbsp;<br>
+'message_parts'&nbsp;should&nbsp;be&nbsp;a&nbsp;string&nbsp;of&nbsp;selected&nbsp;parts<br>
+enclosed&nbsp;in&nbsp;parentheses,&nbsp;eg:&nbsp;"(UID&nbsp;BODY[TEXT])".<br>
+&nbsp;<br>
+'data'&nbsp;are&nbsp;tuples&nbsp;of&nbsp;message&nbsp;part&nbsp;envelope&nbsp;and&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-getacl"><strong>getacl</strong></a>(self, mailbox)</dt><dd><tt>Get&nbsp;the&nbsp;ACLs&nbsp;for&nbsp;a&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-getacl">getacl</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-getannotation"><strong>getannotation</strong></a>(self, mailbox, entry, attribute)</dt><dd><tt>(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-getannotation">getannotation</a>(mailbox,&nbsp;entry,&nbsp;attribute)<br>
+Retrieve&nbsp;ANNOTATIONs.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-getquota"><strong>getquota</strong></a>(self, root)</dt><dd><tt>Get&nbsp;the&nbsp;quota&nbsp;root's&nbsp;resource&nbsp;usage&nbsp;and&nbsp;limits.<br>
+&nbsp;<br>
+Part&nbsp;of&nbsp;the&nbsp;<a href="imaplib.html#IMAP4">IMAP4</a>&nbsp;QUOTA&nbsp;extension&nbsp;defined&nbsp;in&nbsp;rfc2087.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-getquota">getquota</a>(root)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-getquotaroot"><strong>getquotaroot</strong></a>(self, mailbox)</dt><dd><tt>Get&nbsp;the&nbsp;list&nbsp;of&nbsp;quota&nbsp;roots&nbsp;for&nbsp;the&nbsp;named&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[[QUOTAROOT&nbsp;responses...],&nbsp;[QUOTA&nbsp;responses]])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-getquotaroot">getquotaroot</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-list"><strong>list</strong></a>(self, directory<font color="#909090">='""'</font>, pattern<font color="#909090">='*'</font>)</dt><dd><tt>List&nbsp;mailbox&nbsp;names&nbsp;in&nbsp;directory&nbsp;matching&nbsp;pattern.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-list">list</a>(directory='""',&nbsp;pattern='*')<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;list&nbsp;of&nbsp;LIST&nbsp;responses.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-login"><strong>login</strong></a>(self, user, password)</dt><dd><tt>Identify&nbsp;client&nbsp;using&nbsp;plaintext&nbsp;password.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-login">login</a>(user,&nbsp;password)<br>
+&nbsp;<br>
+NB:&nbsp;'password'&nbsp;will&nbsp;be&nbsp;quoted.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-login_cram_md5"><strong>login_cram_md5</strong></a>(self, user, password)</dt><dd><tt>Force&nbsp;use&nbsp;of&nbsp;CRAM-MD5&nbsp;authentication.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-login_cram_md5">login_cram_md5</a>(user,&nbsp;password)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-logout"><strong>logout</strong></a>(self)</dt><dd><tt>Shutdown&nbsp;connection&nbsp;to&nbsp;server.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-logout">logout</a>()<br>
+&nbsp;<br>
+Returns&nbsp;server&nbsp;'BYE'&nbsp;response.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-lsub"><strong>lsub</strong></a>(self, directory<font color="#909090">='""'</font>, pattern<font color="#909090">='*'</font>)</dt><dd><tt>List&nbsp;'subscribed'&nbsp;mailbox&nbsp;names&nbsp;in&nbsp;directory&nbsp;matching&nbsp;pattern.<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-lsub">lsub</a>(directory='""',&nbsp;pattern='*')<br>
+&nbsp;<br>
+'data'&nbsp;are&nbsp;tuples&nbsp;of&nbsp;message&nbsp;part&nbsp;envelope&nbsp;and&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-myrights"><strong>myrights</strong></a>(self, mailbox)</dt><dd><tt>Show&nbsp;my&nbsp;ACLs&nbsp;for&nbsp;a&nbsp;mailbox&nbsp;(i.e.&nbsp;the&nbsp;rights&nbsp;that&nbsp;I&nbsp;have&nbsp;on&nbsp;mailbox).<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-myrights">myrights</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-namespace"><strong>namespace</strong></a>(self)</dt><dd><tt>Returns&nbsp;IMAP&nbsp;namespaces&nbsp;ala&nbsp;rfc2342<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-namespace">namespace</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-noop"><strong>noop</strong></a>(self)</dt><dd><tt>Send&nbsp;NOOP&nbsp;command.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-noop">noop</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-open"><strong>open</strong></a>(self, host<font color="#909090">=''</font>, port<font color="#909090">=143</font>)</dt><dd><tt>Setup&nbsp;connection&nbsp;to&nbsp;remote&nbsp;server&nbsp;on&nbsp;"host:port"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(default:&nbsp;localhost:standard&nbsp;<a href="imaplib.html#IMAP4">IMAP4</a>&nbsp;port).<br>
+This&nbsp;connection&nbsp;will&nbsp;be&nbsp;used&nbsp;by&nbsp;the&nbsp;routines:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;read,&nbsp;readline,&nbsp;send,&nbsp;shutdown.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-partial"><strong>partial</strong></a>(self, message_num, message_part, start, length)</dt><dd><tt>Fetch&nbsp;truncated&nbsp;part&nbsp;of&nbsp;a&nbsp;message.<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-partial">partial</a>(message_num,&nbsp;message_part,&nbsp;start,&nbsp;length)<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;tuple&nbsp;of&nbsp;message&nbsp;part&nbsp;envelope&nbsp;and&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-print_log"><strong>print_log</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SimpleImap-proxyauth"><strong>proxyauth</strong></a>(self, user)</dt><dd><tt>Assume&nbsp;authentication&nbsp;as&nbsp;"user".<br>
+&nbsp;<br>
+Allows&nbsp;an&nbsp;authorised&nbsp;administrator&nbsp;to&nbsp;proxy&nbsp;into&nbsp;any&nbsp;user's<br>
+mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-proxyauth">proxyauth</a>(user)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-read"><strong>read</strong></a>(self, size)</dt><dd><tt>Read&nbsp;'size'&nbsp;bytes&nbsp;from&nbsp;remote.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-readline"><strong>readline</strong></a>(self)</dt><dd><tt>Read&nbsp;line&nbsp;from&nbsp;remote.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-recent"><strong>recent</strong></a>(self)</dt><dd><tt>Return&nbsp;most&nbsp;recent&nbsp;'RECENT'&nbsp;responses&nbsp;if&nbsp;any&nbsp;exist,<br>
+else&nbsp;prompt&nbsp;server&nbsp;for&nbsp;an&nbsp;update&nbsp;using&nbsp;the&nbsp;'NOOP'&nbsp;command.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-recent">recent</a>()<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;None&nbsp;if&nbsp;no&nbsp;new&nbsp;messages,<br>
+else&nbsp;list&nbsp;of&nbsp;RECENT&nbsp;responses,&nbsp;most&nbsp;recent&nbsp;last.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-rename"><strong>rename</strong></a>(self, oldmailbox, newmailbox)</dt><dd><tt>Rename&nbsp;old&nbsp;mailbox&nbsp;name&nbsp;to&nbsp;new.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-rename">rename</a>(oldmailbox,&nbsp;newmailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-response"><strong>response</strong></a>(self, code)</dt><dd><tt>Return&nbsp;data&nbsp;for&nbsp;response&nbsp;'code'&nbsp;if&nbsp;received,&nbsp;or&nbsp;None.<br>
+&nbsp;<br>
+Old&nbsp;value&nbsp;for&nbsp;response&nbsp;'code'&nbsp;is&nbsp;cleared.<br>
+&nbsp;<br>
+(code,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-response">response</a>(code)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-search"><strong>search</strong></a>(self, charset, *criteria)</dt><dd><tt>Search&nbsp;mailbox&nbsp;for&nbsp;matching&nbsp;messages.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-search">search</a>(charset,&nbsp;criterion,&nbsp;...)<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;space&nbsp;separated&nbsp;list&nbsp;of&nbsp;matching&nbsp;message&nbsp;numbers.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-select"><strong>select</strong></a>(self, mailbox<font color="#909090">='INBOX'</font>, readonly<font color="#909090">=False</font>)</dt><dd><tt>Select&nbsp;a&nbsp;mailbox.<br>
+&nbsp;<br>
+Flush&nbsp;all&nbsp;untagged&nbsp;responses.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-select">select</a>(mailbox='INBOX',&nbsp;readonly=False)<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;count&nbsp;of&nbsp;messages&nbsp;in&nbsp;mailbox&nbsp;('EXISTS'&nbsp;response).<br>
+&nbsp;<br>
+Mandated&nbsp;responses&nbsp;are&nbsp;('FLAGS',&nbsp;'EXISTS',&nbsp;'RECENT',&nbsp;'UIDVALIDITY'),&nbsp;so<br>
+other&nbsp;responses&nbsp;should&nbsp;be&nbsp;obtained&nbsp;via&nbsp;&lt;instance&gt;.<a href="#SimpleImap-response">response</a>('FLAGS')&nbsp;etc.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-send"><strong>send</strong></a>(self, data)</dt><dd><tt>Send&nbsp;data&nbsp;to&nbsp;remote.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-setacl"><strong>setacl</strong></a>(self, mailbox, who, what)</dt><dd><tt>Set&nbsp;a&nbsp;mailbox&nbsp;acl.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-setacl">setacl</a>(mailbox,&nbsp;who,&nbsp;what)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-setannotation"><strong>setannotation</strong></a>(self, *args)</dt><dd><tt>(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-setannotation">setannotation</a>(mailbox[,&nbsp;entry,&nbsp;attribute]+)<br>
+Set&nbsp;ANNOTATIONs.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-setquota"><strong>setquota</strong></a>(self, root, limits)</dt><dd><tt>Set&nbsp;the&nbsp;quota&nbsp;root's&nbsp;resource&nbsp;limits.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-setquota">setquota</a>(root,&nbsp;limits)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-shutdown"><strong>shutdown</strong></a>(self)</dt><dd><tt>Close&nbsp;I/O&nbsp;established&nbsp;in&nbsp;"open".</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-socket"><strong>socket</strong></a>(self)</dt><dd><tt>Return&nbsp;socket&nbsp;instance&nbsp;used&nbsp;to&nbsp;connect&nbsp;to&nbsp;<a href="imaplib.html#IMAP4">IMAP4</a>&nbsp;server.<br>
+&nbsp;<br>
+socket&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-socket">socket</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-sort"><strong>sort</strong></a>(self, sort_criteria, charset, *search_criteria)</dt><dd><tt>IMAP4rev1&nbsp;extension&nbsp;SORT&nbsp;command.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-sort">sort</a>(sort_criteria,&nbsp;charset,&nbsp;search_criteria,&nbsp;...)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-status"><strong>status</strong></a>(self, mailbox, names)</dt><dd><tt>Request&nbsp;named&nbsp;status&nbsp;conditions&nbsp;for&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-status">status</a>(mailbox,&nbsp;names)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-store"><strong>store</strong></a>(self, message_set, command, flags)</dt><dd><tt>Alters&nbsp;flag&nbsp;dispositions&nbsp;for&nbsp;messages&nbsp;in&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-store">store</a>(message_set,&nbsp;command,&nbsp;flags)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-subscribe"><strong>subscribe</strong></a>(self, mailbox)</dt><dd><tt>Subscribe&nbsp;to&nbsp;new&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-subscribe">subscribe</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-thread"><strong>thread</strong></a>(self, threading_algorithm, charset, *search_criteria)</dt><dd><tt>IMAPrev1&nbsp;extension&nbsp;THREAD&nbsp;command.<br>
+&nbsp;<br>
+(type,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-thread">thread</a>(threading_algorithm,&nbsp;charset,&nbsp;search_criteria,&nbsp;...)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-uid"><strong>uid</strong></a>(self, command, *args)</dt><dd><tt>Execute&nbsp;"command&nbsp;arg&nbsp;..."&nbsp;with&nbsp;messages&nbsp;identified&nbsp;by&nbsp;UID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rather&nbsp;than&nbsp;message&nbsp;number.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-uid">uid</a>(command,&nbsp;arg1,&nbsp;arg2,&nbsp;...)<br>
+&nbsp;<br>
+Returns&nbsp;response&nbsp;appropriate&nbsp;to&nbsp;'command'.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-unsubscribe"><strong>unsubscribe</strong></a>(self, mailbox)</dt><dd><tt>Unsubscribe&nbsp;from&nbsp;old&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-unsubscribe">unsubscribe</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-xatom"><strong>xatom</strong></a>(self, name, *args)</dt><dd><tt>Allow&nbsp;simple&nbsp;extension&nbsp;commands<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;notified&nbsp;by&nbsp;server&nbsp;in&nbsp;CAPABILITY&nbsp;response.<br>
+&nbsp;<br>
+Assumes&nbsp;command&nbsp;is&nbsp;legal&nbsp;in&nbsp;current&nbsp;state.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImap-xatom">xatom</a>(name,&nbsp;arg,&nbsp;...)<br>
+&nbsp;<br>
+Returns&nbsp;response&nbsp;appropriate&nbsp;to&nbsp;extension&nbsp;command&nbsp;`name'.</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="imaplib.html#IMAP4">imaplib.IMAP4</a>:<br>
+<dl><dt><strong>abort</strong> = &lt;class 'imaplib.abort'&gt;</dl>
+
+<dl><dt><strong>error</strong> = &lt;class 'imaplib.error'&gt;</dl>
+
+<dl><dt><strong>mustquote</strong> = &lt;_sre.SRE_Pattern object&gt;</dl>
+
+<dl><dt><strong>readonly</strong> = &lt;class 'imaplib.readonly'&gt;</dl>
+
+<hr>
+Methods inherited from <a href="simpleimap.html#__simplebase">__simplebase</a>:<br>
+<dl><dt><a name="SimpleImap-Folder"><strong>Folder</strong></a>(self, folder, charset<font color="#909090">=None</font>)</dt><dd><tt>Returns&nbsp;an&nbsp;instance&nbsp;of&nbsp;<a href="#FolderClass">FolderClass</a>.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_ids_by_folder"><strong>get_ids_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get&nbsp;ids&nbsp;by&nbsp;folder</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_message_by_id"><strong>get_message_by_id</strong></a>(self, id)</dt><dd><tt>get_message_by_id</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_message_by_uid"><strong>get_message_by_uid</strong></a>(self, uid)</dt><dd><tt>get_message_by_uid</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_messages_by_folder"><strong>get_messages_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get&nbsp;messages&nbsp;by&nbsp;folder</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_messages_by_ids"><strong>get_messages_by_ids</strong></a>(self, ids)</dt><dd><tt>get&nbsp;messages&nbsp;by&nbsp;ids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_messages_by_uids"><strong>get_messages_by_uids</strong></a>(self, uids)</dt><dd><tt>get&nbsp;messages&nbsp;by&nbsp;uids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_summaries_by_folder"><strong>get_summaries_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get&nbsp;summaries&nbsp;by&nbsp;folder</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_summaries_by_ids"><strong>get_summaries_by_ids</strong></a>(self, ids)</dt><dd><tt>get&nbsp;summaries&nbsp;by&nbsp;ids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_summaries_by_uids"><strong>get_summaries_by_uids</strong></a>(self, uids)</dt><dd><tt>get&nbsp;summaries&nbsp;by&nbsp;uids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_summary_by_id"><strong>get_summary_by_id</strong></a>(self, id)</dt><dd><tt>Retrieve&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;simple&nbsp;header&nbsp;information&nbsp;for&nbsp;a&nbsp;given&nbsp;id.<br>
+&nbsp;<br>
+Requires:&nbsp;id&nbsp;(Sequence&nbsp;number&nbsp;of&nbsp;message)<br>
+Returns:&nbsp;{'uid':&nbsp;UID&nbsp;you&nbsp;requested,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'msgid':&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>&nbsp;Message&nbsp;ID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'size':&nbsp;Size&nbsp;of&nbsp;message&nbsp;in&nbsp;bytes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'date':&nbsp;IMAP's&nbsp;Internaldate&nbsp;for&nbsp;the&nbsp;message,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'envelope':&nbsp;Envelope&nbsp;data}</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_summary_by_uid"><strong>get_summary_by_uid</strong></a>(self, uid)</dt><dd><tt>Retrieve&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;simple&nbsp;header&nbsp;information&nbsp;for&nbsp;a&nbsp;given&nbsp;uid.<br>
+&nbsp;<br>
+Requires:&nbsp;uid&nbsp;(unique&nbsp;numeric&nbsp;ID&nbsp;of&nbsp;message)<br>
+Returns:&nbsp;{'uid':&nbsp;UID&nbsp;you&nbsp;requested,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'msgid':&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>&nbsp;Message&nbsp;ID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'size':&nbsp;Size&nbsp;of&nbsp;message&nbsp;in&nbsp;bytes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'date':&nbsp;IMAP's&nbsp;Internaldate&nbsp;for&nbsp;the&nbsp;message,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'envelope':&nbsp;Envelope&nbsp;data}</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_uid_by_id"><strong>get_uid_by_id</strong></a>(self, id)</dt><dd><tt>Given&nbsp;a&nbsp;message&nbsp;number&nbsp;(id),&nbsp;returns&nbsp;the&nbsp;UID&nbsp;if&nbsp;it&nbsp;exists.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_uids_by_folder"><strong>get_uids_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get_uids&nbsp;by&nbsp;folders</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-get_uids_by_ids"><strong>get_uids_by_ids</strong></a>(self, ids)</dt><dd><tt>get&nbsp;uids&nbsp;by&nbsp;ids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-parseFetch"><strong>parseFetch</strong></a>(self, text)</dt><dd><tt>Given&nbsp;a&nbsp;string&nbsp;(e.g.&nbsp;'1&nbsp;(ENVELOPE...'),&nbsp;breaks&nbsp;it&nbsp;down&nbsp;into<br>
+a&nbsp;useful&nbsp;format.<br>
+&nbsp;<br>
+Based&nbsp;on&nbsp;Helder&nbsp;Guerreiro&nbsp;&lt;helder@paxjulia.com&gt;'s<br>
+imaplib2&nbsp;sexp.py:&nbsp;<a href="http://code.google.com/p/webpymail/">http://code.google.com/p/webpymail/</a></tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-parseInternalDate"><strong>parseInternalDate</strong></a>(self, resp)</dt><dd><tt>Takes&nbsp;IMAP&nbsp;INTERNALDATE&nbsp;and&nbsp;turns&nbsp;it&nbsp;into&nbsp;a&nbsp;Python&nbsp;time<br>
+tuple&nbsp;referenced&nbsp;to&nbsp;GMT.<br>
+&nbsp;<br>
+Based&nbsp;from:&nbsp;<a href="http://code.google.com/p/webpymail/">http://code.google.com/p/webpymail/</a></tt></dd></dl>
+
+<dl><dt><a name="SimpleImap-parse_summary_data"><strong>parse_summary_data</strong></a>(self, data)</dt><dd><tt>Takes&nbsp;the&nbsp;data&nbsp;result&nbsp;(second&nbsp;parameter)&nbsp;of&nbsp;a&nbsp;self.<strong>uid</strong>&nbsp;or<br>
+self.<strong>fetch</strong>&nbsp;for&nbsp;(UID&nbsp;ENVELOPE&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>.SIZE&nbsp;INTERNALDATE)&nbsp;and&nbsp;returns<br>
+a&nbsp;dict&nbsp;of&nbsp;simple&nbsp;header&nbsp;information.<br>
+&nbsp;<br>
+Requires:&nbsp;self.<strong>uid</strong>[1]&nbsp;or&nbsp;self.<strong>fetch</strong>[1]<br>
+Returns:&nbsp;{'uid':&nbsp;UID&nbsp;you&nbsp;requested,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'msgid':&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>&nbsp;Message&nbsp;ID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'size':&nbsp;Size&nbsp;of&nbsp;message&nbsp;in&nbsp;bytes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'date':&nbsp;IMAP's&nbsp;Internaldate&nbsp;for&nbsp;the&nbsp;message,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'envelope':&nbsp;Envelope&nbsp;data}</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SimpleImapSSL">class <strong>SimpleImapSSL</strong></a>(<a href="imaplib.html#IMAP4_SSL">imaplib.IMAP4_SSL</a>, <a href="simpleimap.html#__simplebase">__simplebase</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Simple&nbsp;Imap&nbsp;SSL<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="simpleimap.html#SimpleImapSSL">SimpleImapSSL</a></dd>
+<dd><a href="imaplib.html#IMAP4_SSL">imaplib.IMAP4_SSL</a></dd>
+<dd><a href="imaplib.html#IMAP4">imaplib.IMAP4</a></dd>
+<dd><a href="simpleimap.html#__simplebase">__simplebase</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="SimpleImapSSL-read"><strong>read</strong></a>(self, n)</dt><dd><tt>Read&nbsp;'size'&nbsp;bytes&nbsp;from&nbsp;remote.&nbsp;&nbsp;(Contains&nbsp;workaround)</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="imaplib.html#IMAP4_SSL">imaplib.IMAP4_SSL</a>:<br>
+<dl><dt><a name="SimpleImapSSL-__init__"><strong>__init__</strong></a>(self, host<font color="#909090">=''</font>, port<font color="#909090">=993</font>, keyfile<font color="#909090">=None</font>, certfile<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="SimpleImapSSL-open"><strong>open</strong></a>(self, host<font color="#909090">=''</font>, port<font color="#909090">=993</font>)</dt><dd><tt>Setup&nbsp;connection&nbsp;to&nbsp;remote&nbsp;server&nbsp;on&nbsp;"host:port".<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(default:&nbsp;localhost:standard&nbsp;<a href="imaplib.html#IMAP4">IMAP4</a>&nbsp;SSL&nbsp;port).<br>
+This&nbsp;connection&nbsp;will&nbsp;be&nbsp;used&nbsp;by&nbsp;the&nbsp;routines:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;read,&nbsp;readline,&nbsp;send,&nbsp;shutdown.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-readline"><strong>readline</strong></a>(self)</dt><dd><tt>Read&nbsp;line&nbsp;from&nbsp;remote.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-send"><strong>send</strong></a>(self, data)</dt><dd><tt>Send&nbsp;data&nbsp;to&nbsp;remote.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-shutdown"><strong>shutdown</strong></a>(self)</dt><dd><tt>Close&nbsp;I/O&nbsp;established&nbsp;in&nbsp;"open".</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-socket"><strong>socket</strong></a>(self)</dt><dd><tt>Return&nbsp;socket&nbsp;instance&nbsp;used&nbsp;to&nbsp;connect&nbsp;to&nbsp;<a href="imaplib.html#IMAP4">IMAP4</a>&nbsp;server.<br>
+&nbsp;<br>
+socket&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-socket">socket</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-ssl"><strong>ssl</strong></a>(self)</dt><dd><tt>Return&nbsp;SSLObject&nbsp;instance&nbsp;used&nbsp;to&nbsp;communicate&nbsp;with&nbsp;the&nbsp;<a href="imaplib.html#IMAP4">IMAP4</a>&nbsp;server.<br>
+&nbsp;<br>
+ssl&nbsp;=&nbsp;ssl.wrap_socket(&lt;instance&gt;.socket)</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="imaplib.html#IMAP4">imaplib.IMAP4</a>:<br>
+<dl><dt><a name="SimpleImapSSL-__getattr__"><strong>__getattr__</strong></a>(self, attr)</dt></dl>
+
+<dl><dt><a name="SimpleImapSSL-append"><strong>append</strong></a>(self, mailbox, flags, date_time, message)</dt><dd><tt>Append&nbsp;message&nbsp;to&nbsp;named&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-append">append</a>(mailbox,&nbsp;flags,&nbsp;date_time,&nbsp;message)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All&nbsp;args&nbsp;except&nbsp;`message'&nbsp;can&nbsp;be&nbsp;None.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-authenticate"><strong>authenticate</strong></a>(self, mechanism, authobject)</dt><dd><tt>Authenticate&nbsp;command&nbsp;-&nbsp;requires&nbsp;response&nbsp;processing.<br>
+&nbsp;<br>
+'mechanism'&nbsp;specifies&nbsp;which&nbsp;authentication&nbsp;mechanism&nbsp;is&nbsp;to<br>
+be&nbsp;used&nbsp;-&nbsp;it&nbsp;must&nbsp;appear&nbsp;in&nbsp;&lt;instance&gt;.capabilities&nbsp;in&nbsp;the<br>
+form&nbsp;AUTH=&lt;mechanism&gt;.<br>
+&nbsp;<br>
+'authobject'&nbsp;must&nbsp;be&nbsp;a&nbsp;callable&nbsp;object:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data&nbsp;=&nbsp;authobject(response)<br>
+&nbsp;<br>
+It&nbsp;will&nbsp;be&nbsp;called&nbsp;to&nbsp;process&nbsp;server&nbsp;continuation&nbsp;responses.<br>
+It&nbsp;should&nbsp;return&nbsp;data&nbsp;that&nbsp;will&nbsp;be&nbsp;encoded&nbsp;and&nbsp;sent&nbsp;to&nbsp;server.<br>
+It&nbsp;should&nbsp;return&nbsp;None&nbsp;if&nbsp;the&nbsp;client&nbsp;abort&nbsp;response&nbsp;'*'&nbsp;should<br>
+be&nbsp;sent&nbsp;instead.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-capability"><strong>capability</strong></a>(self)</dt><dd><tt>(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-capability">capability</a>()<br>
+Fetch&nbsp;capabilities&nbsp;list&nbsp;from&nbsp;server.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-check"><strong>check</strong></a>(self)</dt><dd><tt>Checkpoint&nbsp;mailbox&nbsp;on&nbsp;server.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-check">check</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-close"><strong>close</strong></a>(self)</dt><dd><tt>Close&nbsp;currently&nbsp;selected&nbsp;mailbox.<br>
+&nbsp;<br>
+Deleted&nbsp;messages&nbsp;are&nbsp;removed&nbsp;from&nbsp;writable&nbsp;mailbox.<br>
+This&nbsp;is&nbsp;the&nbsp;recommended&nbsp;command&nbsp;before&nbsp;'LOGOUT'.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-close">close</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-copy"><strong>copy</strong></a>(self, message_set, new_mailbox)</dt><dd><tt>Copy&nbsp;'message_set'&nbsp;messages&nbsp;onto&nbsp;end&nbsp;of&nbsp;'new_mailbox'.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-copy">copy</a>(message_set,&nbsp;new_mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-create"><strong>create</strong></a>(self, mailbox)</dt><dd><tt>Create&nbsp;new&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-create">create</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-delete"><strong>delete</strong></a>(self, mailbox)</dt><dd><tt>Delete&nbsp;old&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-delete">delete</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-deleteacl"><strong>deleteacl</strong></a>(self, mailbox, who)</dt><dd><tt>Delete&nbsp;the&nbsp;ACLs&nbsp;(remove&nbsp;any&nbsp;rights)&nbsp;set&nbsp;for&nbsp;who&nbsp;on&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-deleteacl">deleteacl</a>(mailbox,&nbsp;who)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-expunge"><strong>expunge</strong></a>(self)</dt><dd><tt>Permanently&nbsp;remove&nbsp;deleted&nbsp;items&nbsp;from&nbsp;selected&nbsp;mailbox.<br>
+&nbsp;<br>
+Generates&nbsp;'EXPUNGE'&nbsp;response&nbsp;for&nbsp;each&nbsp;deleted&nbsp;message.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-expunge">expunge</a>()<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;list&nbsp;of&nbsp;'EXPUNGE'd&nbsp;message&nbsp;numbers&nbsp;in&nbsp;order&nbsp;received.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-fetch"><strong>fetch</strong></a>(self, message_set, message_parts)</dt><dd><tt>Fetch&nbsp;(parts&nbsp;of)&nbsp;messages.<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-fetch">fetch</a>(message_set,&nbsp;message_parts)<br>
+&nbsp;<br>
+'message_parts'&nbsp;should&nbsp;be&nbsp;a&nbsp;string&nbsp;of&nbsp;selected&nbsp;parts<br>
+enclosed&nbsp;in&nbsp;parentheses,&nbsp;eg:&nbsp;"(UID&nbsp;BODY[TEXT])".<br>
+&nbsp;<br>
+'data'&nbsp;are&nbsp;tuples&nbsp;of&nbsp;message&nbsp;part&nbsp;envelope&nbsp;and&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-getacl"><strong>getacl</strong></a>(self, mailbox)</dt><dd><tt>Get&nbsp;the&nbsp;ACLs&nbsp;for&nbsp;a&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-getacl">getacl</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-getannotation"><strong>getannotation</strong></a>(self, mailbox, entry, attribute)</dt><dd><tt>(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-getannotation">getannotation</a>(mailbox,&nbsp;entry,&nbsp;attribute)<br>
+Retrieve&nbsp;ANNOTATIONs.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-getquota"><strong>getquota</strong></a>(self, root)</dt><dd><tt>Get&nbsp;the&nbsp;quota&nbsp;root's&nbsp;resource&nbsp;usage&nbsp;and&nbsp;limits.<br>
+&nbsp;<br>
+Part&nbsp;of&nbsp;the&nbsp;<a href="imaplib.html#IMAP4">IMAP4</a>&nbsp;QUOTA&nbsp;extension&nbsp;defined&nbsp;in&nbsp;rfc2087.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-getquota">getquota</a>(root)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-getquotaroot"><strong>getquotaroot</strong></a>(self, mailbox)</dt><dd><tt>Get&nbsp;the&nbsp;list&nbsp;of&nbsp;quota&nbsp;roots&nbsp;for&nbsp;the&nbsp;named&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[[QUOTAROOT&nbsp;responses...],&nbsp;[QUOTA&nbsp;responses]])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-getquotaroot">getquotaroot</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-list"><strong>list</strong></a>(self, directory<font color="#909090">='""'</font>, pattern<font color="#909090">='*'</font>)</dt><dd><tt>List&nbsp;mailbox&nbsp;names&nbsp;in&nbsp;directory&nbsp;matching&nbsp;pattern.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-list">list</a>(directory='""',&nbsp;pattern='*')<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;list&nbsp;of&nbsp;LIST&nbsp;responses.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-login"><strong>login</strong></a>(self, user, password)</dt><dd><tt>Identify&nbsp;client&nbsp;using&nbsp;plaintext&nbsp;password.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-login">login</a>(user,&nbsp;password)<br>
+&nbsp;<br>
+NB:&nbsp;'password'&nbsp;will&nbsp;be&nbsp;quoted.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-login_cram_md5"><strong>login_cram_md5</strong></a>(self, user, password)</dt><dd><tt>Force&nbsp;use&nbsp;of&nbsp;CRAM-MD5&nbsp;authentication.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-login_cram_md5">login_cram_md5</a>(user,&nbsp;password)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-logout"><strong>logout</strong></a>(self)</dt><dd><tt>Shutdown&nbsp;connection&nbsp;to&nbsp;server.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-logout">logout</a>()<br>
+&nbsp;<br>
+Returns&nbsp;server&nbsp;'BYE'&nbsp;response.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-lsub"><strong>lsub</strong></a>(self, directory<font color="#909090">='""'</font>, pattern<font color="#909090">='*'</font>)</dt><dd><tt>List&nbsp;'subscribed'&nbsp;mailbox&nbsp;names&nbsp;in&nbsp;directory&nbsp;matching&nbsp;pattern.<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-lsub">lsub</a>(directory='""',&nbsp;pattern='*')<br>
+&nbsp;<br>
+'data'&nbsp;are&nbsp;tuples&nbsp;of&nbsp;message&nbsp;part&nbsp;envelope&nbsp;and&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-myrights"><strong>myrights</strong></a>(self, mailbox)</dt><dd><tt>Show&nbsp;my&nbsp;ACLs&nbsp;for&nbsp;a&nbsp;mailbox&nbsp;(i.e.&nbsp;the&nbsp;rights&nbsp;that&nbsp;I&nbsp;have&nbsp;on&nbsp;mailbox).<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-myrights">myrights</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-namespace"><strong>namespace</strong></a>(self)</dt><dd><tt>Returns&nbsp;IMAP&nbsp;namespaces&nbsp;ala&nbsp;rfc2342<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-namespace">namespace</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-noop"><strong>noop</strong></a>(self)</dt><dd><tt>Send&nbsp;NOOP&nbsp;command.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-noop">noop</a>()</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-partial"><strong>partial</strong></a>(self, message_num, message_part, start, length)</dt><dd><tt>Fetch&nbsp;truncated&nbsp;part&nbsp;of&nbsp;a&nbsp;message.<br>
+&nbsp;<br>
+(typ,&nbsp;[data,&nbsp;...])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-partial">partial</a>(message_num,&nbsp;message_part,&nbsp;start,&nbsp;length)<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;tuple&nbsp;of&nbsp;message&nbsp;part&nbsp;envelope&nbsp;and&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-print_log"><strong>print_log</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SimpleImapSSL-proxyauth"><strong>proxyauth</strong></a>(self, user)</dt><dd><tt>Assume&nbsp;authentication&nbsp;as&nbsp;"user".<br>
+&nbsp;<br>
+Allows&nbsp;an&nbsp;authorised&nbsp;administrator&nbsp;to&nbsp;proxy&nbsp;into&nbsp;any&nbsp;user's<br>
+mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-proxyauth">proxyauth</a>(user)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-recent"><strong>recent</strong></a>(self)</dt><dd><tt>Return&nbsp;most&nbsp;recent&nbsp;'RECENT'&nbsp;responses&nbsp;if&nbsp;any&nbsp;exist,<br>
+else&nbsp;prompt&nbsp;server&nbsp;for&nbsp;an&nbsp;update&nbsp;using&nbsp;the&nbsp;'NOOP'&nbsp;command.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-recent">recent</a>()<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;None&nbsp;if&nbsp;no&nbsp;new&nbsp;messages,<br>
+else&nbsp;list&nbsp;of&nbsp;RECENT&nbsp;responses,&nbsp;most&nbsp;recent&nbsp;last.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-rename"><strong>rename</strong></a>(self, oldmailbox, newmailbox)</dt><dd><tt>Rename&nbsp;old&nbsp;mailbox&nbsp;name&nbsp;to&nbsp;new.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-rename">rename</a>(oldmailbox,&nbsp;newmailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-response"><strong>response</strong></a>(self, code)</dt><dd><tt>Return&nbsp;data&nbsp;for&nbsp;response&nbsp;'code'&nbsp;if&nbsp;received,&nbsp;or&nbsp;None.<br>
+&nbsp;<br>
+Old&nbsp;value&nbsp;for&nbsp;response&nbsp;'code'&nbsp;is&nbsp;cleared.<br>
+&nbsp;<br>
+(code,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-response">response</a>(code)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-search"><strong>search</strong></a>(self, charset, *criteria)</dt><dd><tt>Search&nbsp;mailbox&nbsp;for&nbsp;matching&nbsp;messages.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-search">search</a>(charset,&nbsp;criterion,&nbsp;...)<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;space&nbsp;separated&nbsp;list&nbsp;of&nbsp;matching&nbsp;message&nbsp;numbers.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-select"><strong>select</strong></a>(self, mailbox<font color="#909090">='INBOX'</font>, readonly<font color="#909090">=False</font>)</dt><dd><tt>Select&nbsp;a&nbsp;mailbox.<br>
+&nbsp;<br>
+Flush&nbsp;all&nbsp;untagged&nbsp;responses.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-select">select</a>(mailbox='INBOX',&nbsp;readonly=False)<br>
+&nbsp;<br>
+'data'&nbsp;is&nbsp;count&nbsp;of&nbsp;messages&nbsp;in&nbsp;mailbox&nbsp;('EXISTS'&nbsp;response).<br>
+&nbsp;<br>
+Mandated&nbsp;responses&nbsp;are&nbsp;('FLAGS',&nbsp;'EXISTS',&nbsp;'RECENT',&nbsp;'UIDVALIDITY'),&nbsp;so<br>
+other&nbsp;responses&nbsp;should&nbsp;be&nbsp;obtained&nbsp;via&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-response">response</a>('FLAGS')&nbsp;etc.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-setacl"><strong>setacl</strong></a>(self, mailbox, who, what)</dt><dd><tt>Set&nbsp;a&nbsp;mailbox&nbsp;acl.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-setacl">setacl</a>(mailbox,&nbsp;who,&nbsp;what)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-setannotation"><strong>setannotation</strong></a>(self, *args)</dt><dd><tt>(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-setannotation">setannotation</a>(mailbox[,&nbsp;entry,&nbsp;attribute]+)<br>
+Set&nbsp;ANNOTATIONs.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-setquota"><strong>setquota</strong></a>(self, root, limits)</dt><dd><tt>Set&nbsp;the&nbsp;quota&nbsp;root's&nbsp;resource&nbsp;limits.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-setquota">setquota</a>(root,&nbsp;limits)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-sort"><strong>sort</strong></a>(self, sort_criteria, charset, *search_criteria)</dt><dd><tt>IMAP4rev1&nbsp;extension&nbsp;SORT&nbsp;command.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-sort">sort</a>(sort_criteria,&nbsp;charset,&nbsp;search_criteria,&nbsp;...)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-status"><strong>status</strong></a>(self, mailbox, names)</dt><dd><tt>Request&nbsp;named&nbsp;status&nbsp;conditions&nbsp;for&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-status">status</a>(mailbox,&nbsp;names)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-store"><strong>store</strong></a>(self, message_set, command, flags)</dt><dd><tt>Alters&nbsp;flag&nbsp;dispositions&nbsp;for&nbsp;messages&nbsp;in&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-store">store</a>(message_set,&nbsp;command,&nbsp;flags)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-subscribe"><strong>subscribe</strong></a>(self, mailbox)</dt><dd><tt>Subscribe&nbsp;to&nbsp;new&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-subscribe">subscribe</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-thread"><strong>thread</strong></a>(self, threading_algorithm, charset, *search_criteria)</dt><dd><tt>IMAPrev1&nbsp;extension&nbsp;THREAD&nbsp;command.<br>
+&nbsp;<br>
+(type,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-thread">thread</a>(threading_algorithm,&nbsp;charset,&nbsp;search_criteria,&nbsp;...)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-uid"><strong>uid</strong></a>(self, command, *args)</dt><dd><tt>Execute&nbsp;"command&nbsp;arg&nbsp;..."&nbsp;with&nbsp;messages&nbsp;identified&nbsp;by&nbsp;UID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rather&nbsp;than&nbsp;message&nbsp;number.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-uid">uid</a>(command,&nbsp;arg1,&nbsp;arg2,&nbsp;...)<br>
+&nbsp;<br>
+Returns&nbsp;response&nbsp;appropriate&nbsp;to&nbsp;'command'.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-unsubscribe"><strong>unsubscribe</strong></a>(self, mailbox)</dt><dd><tt>Unsubscribe&nbsp;from&nbsp;old&nbsp;mailbox.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-unsubscribe">unsubscribe</a>(mailbox)</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-xatom"><strong>xatom</strong></a>(self, name, *args)</dt><dd><tt>Allow&nbsp;simple&nbsp;extension&nbsp;commands<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;notified&nbsp;by&nbsp;server&nbsp;in&nbsp;CAPABILITY&nbsp;response.<br>
+&nbsp;<br>
+Assumes&nbsp;command&nbsp;is&nbsp;legal&nbsp;in&nbsp;current&nbsp;state.<br>
+&nbsp;<br>
+(typ,&nbsp;[data])&nbsp;=&nbsp;&lt;instance&gt;.<a href="#SimpleImapSSL-xatom">xatom</a>(name,&nbsp;arg,&nbsp;...)<br>
+&nbsp;<br>
+Returns&nbsp;response&nbsp;appropriate&nbsp;to&nbsp;extension&nbsp;command&nbsp;`name'.</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="imaplib.html#IMAP4">imaplib.IMAP4</a>:<br>
+<dl><dt><strong>abort</strong> = &lt;class 'imaplib.abort'&gt;</dl>
+
+<dl><dt><strong>error</strong> = &lt;class 'imaplib.error'&gt;</dl>
+
+<dl><dt><strong>mustquote</strong> = &lt;_sre.SRE_Pattern object&gt;</dl>
+
+<dl><dt><strong>readonly</strong> = &lt;class 'imaplib.readonly'&gt;</dl>
+
+<hr>
+Methods inherited from <a href="simpleimap.html#__simplebase">__simplebase</a>:<br>
+<dl><dt><a name="SimpleImapSSL-Folder"><strong>Folder</strong></a>(self, folder, charset<font color="#909090">=None</font>)</dt><dd><tt>Returns&nbsp;an&nbsp;instance&nbsp;of&nbsp;<a href="#FolderClass">FolderClass</a>.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_ids_by_folder"><strong>get_ids_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get&nbsp;ids&nbsp;by&nbsp;folder</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_message_by_id"><strong>get_message_by_id</strong></a>(self, id)</dt><dd><tt>get_message_by_id</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_message_by_uid"><strong>get_message_by_uid</strong></a>(self, uid)</dt><dd><tt>get_message_by_uid</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_messages_by_folder"><strong>get_messages_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get&nbsp;messages&nbsp;by&nbsp;folder</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_messages_by_ids"><strong>get_messages_by_ids</strong></a>(self, ids)</dt><dd><tt>get&nbsp;messages&nbsp;by&nbsp;ids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_messages_by_uids"><strong>get_messages_by_uids</strong></a>(self, uids)</dt><dd><tt>get&nbsp;messages&nbsp;by&nbsp;uids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_summaries_by_folder"><strong>get_summaries_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get&nbsp;summaries&nbsp;by&nbsp;folder</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_summaries_by_ids"><strong>get_summaries_by_ids</strong></a>(self, ids)</dt><dd><tt>get&nbsp;summaries&nbsp;by&nbsp;ids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_summaries_by_uids"><strong>get_summaries_by_uids</strong></a>(self, uids)</dt><dd><tt>get&nbsp;summaries&nbsp;by&nbsp;uids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_summary_by_id"><strong>get_summary_by_id</strong></a>(self, id)</dt><dd><tt>Retrieve&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;simple&nbsp;header&nbsp;information&nbsp;for&nbsp;a&nbsp;given&nbsp;id.<br>
+&nbsp;<br>
+Requires:&nbsp;id&nbsp;(Sequence&nbsp;number&nbsp;of&nbsp;message)<br>
+Returns:&nbsp;{'uid':&nbsp;UID&nbsp;you&nbsp;requested,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'msgid':&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>&nbsp;Message&nbsp;ID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'size':&nbsp;Size&nbsp;of&nbsp;message&nbsp;in&nbsp;bytes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'date':&nbsp;IMAP's&nbsp;Internaldate&nbsp;for&nbsp;the&nbsp;message,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'envelope':&nbsp;Envelope&nbsp;data}</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_summary_by_uid"><strong>get_summary_by_uid</strong></a>(self, uid)</dt><dd><tt>Retrieve&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;simple&nbsp;header&nbsp;information&nbsp;for&nbsp;a&nbsp;given&nbsp;uid.<br>
+&nbsp;<br>
+Requires:&nbsp;uid&nbsp;(unique&nbsp;numeric&nbsp;ID&nbsp;of&nbsp;message)<br>
+Returns:&nbsp;{'uid':&nbsp;UID&nbsp;you&nbsp;requested,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'msgid':&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>&nbsp;Message&nbsp;ID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'size':&nbsp;Size&nbsp;of&nbsp;message&nbsp;in&nbsp;bytes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'date':&nbsp;IMAP's&nbsp;Internaldate&nbsp;for&nbsp;the&nbsp;message,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'envelope':&nbsp;Envelope&nbsp;data}</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_uid_by_id"><strong>get_uid_by_id</strong></a>(self, id)</dt><dd><tt>Given&nbsp;a&nbsp;message&nbsp;number&nbsp;(id),&nbsp;returns&nbsp;the&nbsp;UID&nbsp;if&nbsp;it&nbsp;exists.</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_uids_by_folder"><strong>get_uids_by_folder</strong></a>(self, folder, charset<font color="#909090">=None</font>, search<font color="#909090">='ALL'</font>)</dt><dd><tt>get_uids&nbsp;by&nbsp;folders</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-get_uids_by_ids"><strong>get_uids_by_ids</strong></a>(self, ids)</dt><dd><tt>get&nbsp;uids&nbsp;by&nbsp;ids</tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-parseFetch"><strong>parseFetch</strong></a>(self, text)</dt><dd><tt>Given&nbsp;a&nbsp;string&nbsp;(e.g.&nbsp;'1&nbsp;(ENVELOPE...'),&nbsp;breaks&nbsp;it&nbsp;down&nbsp;into<br>
+a&nbsp;useful&nbsp;format.<br>
+&nbsp;<br>
+Based&nbsp;on&nbsp;Helder&nbsp;Guerreiro&nbsp;&lt;helder@paxjulia.com&gt;'s<br>
+imaplib2&nbsp;sexp.py:&nbsp;<a href="http://code.google.com/p/webpymail/">http://code.google.com/p/webpymail/</a></tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-parseInternalDate"><strong>parseInternalDate</strong></a>(self, resp)</dt><dd><tt>Takes&nbsp;IMAP&nbsp;INTERNALDATE&nbsp;and&nbsp;turns&nbsp;it&nbsp;into&nbsp;a&nbsp;Python&nbsp;time<br>
+tuple&nbsp;referenced&nbsp;to&nbsp;GMT.<br>
+&nbsp;<br>
+Based&nbsp;from:&nbsp;<a href="http://code.google.com/p/webpymail/">http://code.google.com/p/webpymail/</a></tt></dd></dl>
+
+<dl><dt><a name="SimpleImapSSL-parse_summary_data"><strong>parse_summary_data</strong></a>(self, data)</dt><dd><tt>Takes&nbsp;the&nbsp;data&nbsp;result&nbsp;(second&nbsp;parameter)&nbsp;of&nbsp;a&nbsp;self.<strong>uid</strong>&nbsp;or<br>
+self.<strong>fetch</strong>&nbsp;for&nbsp;(UID&nbsp;ENVELOPE&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>.SIZE&nbsp;INTERNALDATE)&nbsp;and&nbsp;returns<br>
+a&nbsp;dict&nbsp;of&nbsp;simple&nbsp;header&nbsp;information.<br>
+&nbsp;<br>
+Requires:&nbsp;self.<strong>uid</strong>[1]&nbsp;or&nbsp;self.<strong>fetch</strong>[1]<br>
+Returns:&nbsp;{'uid':&nbsp;UID&nbsp;you&nbsp;requested,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'msgid':&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc822.txt">RFC822</a>&nbsp;Message&nbsp;ID,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'size':&nbsp;Size&nbsp;of&nbsp;message&nbsp;in&nbsp;bytes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'date':&nbsp;IMAP's&nbsp;Internaldate&nbsp;for&nbsp;the&nbsp;message,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'envelope':&nbsp;Envelope&nbsp;data}</tt></dd></dl>
+
+</td></tr></table></td></tr></table>
+</body></html>

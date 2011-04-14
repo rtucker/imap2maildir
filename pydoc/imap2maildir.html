@@ -1,0 +1,378 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module imap2maildir</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>imap2maildir</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:///F:/development/portablegit/imap2maildir/imap2maildir.py">f:\development\portablegit\imap2maildir\imap2maildir.py</a></font></td></tr></table>
+    <p><tt>Mirrors&nbsp;the&nbsp;contents&nbsp;of&nbsp;an&nbsp;IMAP4&nbsp;mailbox&nbsp;into&nbsp;a&nbsp;local&nbsp;maildir&nbsp;or&nbsp;mbox.<br>
+Intended&nbsp;for&nbsp;keeping&nbsp;a&nbsp;local&nbsp;backup&nbsp;of&nbsp;a&nbsp;remote&nbsp;IMAP4&nbsp;mailbox&nbsp;to&nbsp;protect<br>
+against&nbsp;loss.&nbsp;&nbsp;Very&nbsp;handy&nbsp;for&nbsp;backing&nbsp;up&nbsp;"[Gmail]/All&nbsp;Mail"&nbsp;from&nbsp;your<br>
+Gmail&nbsp;account,&nbsp;to&nbsp;snag&nbsp;all&nbsp;your&nbsp;archived&nbsp;mail.&nbsp;&nbsp;Re-running&nbsp;it&nbsp;on&nbsp;a&nbsp;regular<br>
+basis&nbsp;will&nbsp;update&nbsp;only&nbsp;the&nbsp;stuff&nbsp;it&nbsp;needs&nbsp;to.<br>
+&nbsp;<br>
+Once&nbsp;I&nbsp;need&nbsp;to,&nbsp;I'll&nbsp;write&nbsp;a&nbsp;restore&nbsp;script&nbsp;;-)<br>
+&nbsp;<br>
+Ryan&nbsp;Tucker&nbsp;&lt;rtucker@gmail.com&gt;<br>
+&nbsp;<br>
+TODO:<br>
+<a href="http://www.python.org/dev/peps/pep-0008/">PEP-0008</a>&nbsp;compliance<br>
+&nbsp;&nbsp;-&nbsp;Docstrings</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="ConfigParser.html">ConfigParser</a><br>
+<a href="email.html">email</a><br>
+<a href="getpass.html">getpass</a><br>
+<a href="hashlib.html">hashlib</a><br>
+</td><td width="25%" valign=top><a href="logging.html">logging</a><br>
+<a href="mailbox.html">mailbox</a><br>
+<a href="optparse.html">optparse</a><br>
+<a href="os.html">os</a><br>
+</td><td width="25%" valign=top><a href="re.html">re</a><br>
+<a href="rfc822.html">rfc822</a><br>
+<a href="simpleimap.html">simpleimap</a><br>
+<a href="sqlite3.html">sqlite3</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+<a href="time.html">time</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="imap2maildir.html#SeenMessagesCache">SeenMessagesCache</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="mailbox.html#Maildir">mailbox.Maildir</a>(<a href="mailbox.html#Mailbox">mailbox.Mailbox</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="imap2maildir.html#lazyMaildir">lazyMaildir</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="optparse.html#OptionParser">optparse.OptionParser</a>(<a href="optparse.html#OptionContainer">optparse.OptionContainer</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="imap2maildir.html#FirstOptionParser">FirstOptionParser</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="FirstOptionParser">class <strong>FirstOptionParser</strong></a>(<a href="optparse.html#OptionParser">optparse.OptionParser</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Adjusts&nbsp;parse_args&nbsp;so&nbsp;it&nbsp;won't&nbsp;complain&nbsp;too&nbsp;heavily&nbsp;about<br>
+options&nbsp;that&nbsp;don't&nbsp;exist.<br>
+Lifted&nbsp;lock,&nbsp;stock,&nbsp;and&nbsp;barrel&nbsp;from&nbsp;/usr/lib/python2.6/optparse.py<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="imap2maildir.html#FirstOptionParser">FirstOptionParser</a></dd>
+<dd><a href="optparse.html#OptionParser">optparse.OptionParser</a></dd>
+<dd><a href="optparse.html#OptionContainer">optparse.OptionContainer</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="FirstOptionParser-parse_args"><strong>parse_args</strong></a>(self, args<font color="#909090">=None</font>, values<font color="#909090">=None</font>)</dt><dd><tt><a href="#FirstOptionParser-parse_args">parse_args</a>(args&nbsp;:&nbsp;[string]&nbsp;=&nbsp;sys.argv[1:],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;values&nbsp;:&nbsp;Values&nbsp;=&nbsp;None)<br>
+-&gt;&nbsp;(values&nbsp;:&nbsp;Values,&nbsp;args&nbsp;:&nbsp;[string])<br>
+&nbsp;<br>
+Parse&nbsp;the&nbsp;command-line&nbsp;options&nbsp;found&nbsp;in&nbsp;'args'&nbsp;(default:<br>
+sys.argv[1:]).&nbsp;&nbsp;Any&nbsp;errors&nbsp;result&nbsp;in&nbsp;a&nbsp;call&nbsp;to&nbsp;'<a href="#FirstOptionParser-error">error</a>()',&nbsp;which<br>
+by&nbsp;default&nbsp;prints&nbsp;the&nbsp;usage&nbsp;message&nbsp;to&nbsp;stderr&nbsp;and&nbsp;calls<br>
+sys.<a href="#FirstOptionParser-exit">exit</a>()&nbsp;with&nbsp;an&nbsp;error&nbsp;message.&nbsp;&nbsp;On&nbsp;success&nbsp;returns&nbsp;a&nbsp;pair<br>
+(values,&nbsp;args)&nbsp;where&nbsp;'values'&nbsp;is&nbsp;an&nbsp;Values&nbsp;instance&nbsp;(with&nbsp;all<br>
+your&nbsp;option&nbsp;values)&nbsp;and&nbsp;'args'&nbsp;is&nbsp;the&nbsp;list&nbsp;of&nbsp;arguments&nbsp;left<br>
+over&nbsp;after&nbsp;parsing&nbsp;options.</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="optparse.html#OptionParser">optparse.OptionParser</a>:<br>
+<dl><dt><a name="FirstOptionParser-__init__"><strong>__init__</strong></a>(self, usage<font color="#909090">=None</font>, option_list<font color="#909090">=None</font>, option_class<font color="#909090">=&lt;class optparse.Option&gt;</font>, version<font color="#909090">=None</font>, conflict_handler<font color="#909090">='error'</font>, description<font color="#909090">=None</font>, formatter<font color="#909090">=None</font>, add_help_option<font color="#909090">=True</font>, prog<font color="#909090">=None</font>, epilog<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-add_option_group"><strong>add_option_group</strong></a>(self, *args, **kwargs)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-check_values"><strong>check_values</strong></a>(self, values, args)</dt><dd><tt><a href="#FirstOptionParser-check_values">check_values</a>(values&nbsp;:&nbsp;Values,&nbsp;args&nbsp;:&nbsp;[string])<br>
+-&gt;&nbsp;(values&nbsp;:&nbsp;Values,&nbsp;args&nbsp;:&nbsp;[string])<br>
+&nbsp;<br>
+Check&nbsp;that&nbsp;the&nbsp;supplied&nbsp;option&nbsp;values&nbsp;and&nbsp;leftover&nbsp;arguments&nbsp;are<br>
+valid.&nbsp;&nbsp;Returns&nbsp;the&nbsp;option&nbsp;values&nbsp;and&nbsp;leftover&nbsp;arguments<br>
+(possibly&nbsp;adjusted,&nbsp;possibly&nbsp;completely&nbsp;new&nbsp;--&nbsp;whatever&nbsp;you<br>
+like).&nbsp;&nbsp;Default&nbsp;implementation&nbsp;just&nbsp;returns&nbsp;the&nbsp;passed-in<br>
+values;&nbsp;subclasses&nbsp;may&nbsp;override&nbsp;as&nbsp;desired.</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-destroy"><strong>destroy</strong></a>(self)</dt><dd><tt>Declare&nbsp;that&nbsp;you&nbsp;are&nbsp;done&nbsp;with&nbsp;this&nbsp;<a href="optparse.html#OptionParser">OptionParser</a>.&nbsp;&nbsp;This&nbsp;cleans&nbsp;up<br>
+reference&nbsp;cycles&nbsp;so&nbsp;the&nbsp;<a href="optparse.html#OptionParser">OptionParser</a>&nbsp;(and&nbsp;all&nbsp;objects&nbsp;referenced&nbsp;by<br>
+it)&nbsp;can&nbsp;be&nbsp;garbage-collected&nbsp;promptly.&nbsp;&nbsp;After&nbsp;calling&nbsp;<a href="#FirstOptionParser-destroy">destroy</a>(),&nbsp;the<br>
+<a href="optparse.html#OptionParser">OptionParser</a>&nbsp;is&nbsp;unusable.</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-disable_interspersed_args"><strong>disable_interspersed_args</strong></a>(self)</dt><dd><tt>Set&nbsp;parsing&nbsp;to&nbsp;stop&nbsp;on&nbsp;the&nbsp;first&nbsp;non-option.&nbsp;Use&nbsp;this&nbsp;if<br>
+you&nbsp;have&nbsp;a&nbsp;command&nbsp;processor&nbsp;which&nbsp;runs&nbsp;another&nbsp;command&nbsp;that<br>
+has&nbsp;options&nbsp;of&nbsp;its&nbsp;own&nbsp;and&nbsp;you&nbsp;want&nbsp;to&nbsp;make&nbsp;sure&nbsp;these&nbsp;options<br>
+don't&nbsp;get&nbsp;confused.</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-enable_interspersed_args"><strong>enable_interspersed_args</strong></a>(self)</dt><dd><tt>Set&nbsp;parsing&nbsp;to&nbsp;not&nbsp;stop&nbsp;on&nbsp;the&nbsp;first&nbsp;non-option,&nbsp;allowing<br>
+interspersing&nbsp;switches&nbsp;with&nbsp;command&nbsp;arguments.&nbsp;This&nbsp;is&nbsp;the<br>
+default&nbsp;behavior.&nbsp;See&nbsp;also&nbsp;<a href="#FirstOptionParser-disable_interspersed_args">disable_interspersed_args</a>()&nbsp;and&nbsp;the<br>
+class&nbsp;documentation&nbsp;description&nbsp;of&nbsp;the&nbsp;attribute<br>
+allow_interspersed_args.</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-error"><strong>error</strong></a>(self, msg)</dt><dd><tt><a href="#FirstOptionParser-error">error</a>(msg&nbsp;:&nbsp;string)<br>
+&nbsp;<br>
+Print&nbsp;a&nbsp;usage&nbsp;message&nbsp;incorporating&nbsp;'msg'&nbsp;to&nbsp;stderr&nbsp;and&nbsp;exit.<br>
+If&nbsp;you&nbsp;override&nbsp;this&nbsp;in&nbsp;a&nbsp;subclass,&nbsp;it&nbsp;should&nbsp;not&nbsp;return&nbsp;--&nbsp;it<br>
+should&nbsp;either&nbsp;exit&nbsp;or&nbsp;raise&nbsp;an&nbsp;exception.</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-exit"><strong>exit</strong></a>(self, status<font color="#909090">=0</font>, msg<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-expand_prog_name"><strong>expand_prog_name</strong></a>(self, s)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-format_epilog"><strong>format_epilog</strong></a>(self, formatter)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-format_help"><strong>format_help</strong></a>(self, formatter<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-format_option_help"><strong>format_option_help</strong></a>(self, formatter<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-get_default_values"><strong>get_default_values</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-get_description"><strong>get_description</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-get_option_group"><strong>get_option_group</strong></a>(self, opt_str)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-get_prog_name"><strong>get_prog_name</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-get_usage"><strong>get_usage</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-get_version"><strong>get_version</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-print_help"><strong>print_help</strong></a>(self, file<font color="#909090">=None</font>)</dt><dd><tt><a href="#FirstOptionParser-print_help">print_help</a>(file&nbsp;:&nbsp;file&nbsp;=&nbsp;stdout)<br>
+&nbsp;<br>
+Print&nbsp;an&nbsp;extended&nbsp;help&nbsp;message,&nbsp;listing&nbsp;all&nbsp;options&nbsp;and&nbsp;any<br>
+help&nbsp;text&nbsp;provided&nbsp;with&nbsp;them,&nbsp;to&nbsp;'file'&nbsp;(default&nbsp;stdout).</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-print_usage"><strong>print_usage</strong></a>(self, file<font color="#909090">=None</font>)</dt><dd><tt><a href="#FirstOptionParser-print_usage">print_usage</a>(file&nbsp;:&nbsp;file&nbsp;=&nbsp;stdout)<br>
+&nbsp;<br>
+Print&nbsp;the&nbsp;usage&nbsp;message&nbsp;for&nbsp;the&nbsp;current&nbsp;program&nbsp;(self.<strong>usage</strong>)&nbsp;to<br>
+'file'&nbsp;(default&nbsp;stdout).&nbsp;&nbsp;Any&nbsp;occurrence&nbsp;of&nbsp;the&nbsp;string&nbsp;"%prog"&nbsp;in<br>
+self.<strong>usage</strong>&nbsp;is&nbsp;replaced&nbsp;with&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;current&nbsp;program<br>
+(basename&nbsp;of&nbsp;sys.argv[0]).&nbsp;&nbsp;Does&nbsp;nothing&nbsp;if&nbsp;self.<strong>usage</strong>&nbsp;is&nbsp;empty<br>
+or&nbsp;not&nbsp;defined.</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-print_version"><strong>print_version</strong></a>(self, file<font color="#909090">=None</font>)</dt><dd><tt><a href="#FirstOptionParser-print_version">print_version</a>(file&nbsp;:&nbsp;file&nbsp;=&nbsp;stdout)<br>
+&nbsp;<br>
+Print&nbsp;the&nbsp;version&nbsp;message&nbsp;for&nbsp;this&nbsp;program&nbsp;(self.<strong>version</strong>)&nbsp;to<br>
+'file'&nbsp;(default&nbsp;stdout).&nbsp;&nbsp;As&nbsp;with&nbsp;<a href="#FirstOptionParser-print_usage">print_usage</a>(),&nbsp;any&nbsp;occurrence<br>
+of&nbsp;"%prog"&nbsp;in&nbsp;self.<strong>version</strong>&nbsp;is&nbsp;replaced&nbsp;by&nbsp;the&nbsp;current&nbsp;program's<br>
+name.&nbsp;&nbsp;Does&nbsp;nothing&nbsp;if&nbsp;self.<strong>version</strong>&nbsp;is&nbsp;empty&nbsp;or&nbsp;undefined.</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-set_default"><strong>set_default</strong></a>(self, dest, value)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-set_defaults"><strong>set_defaults</strong></a>(self, **kwargs)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-set_process_default_values"><strong>set_process_default_values</strong></a>(self, process)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-set_usage"><strong>set_usage</strong></a>(self, usage)</dt></dl>
+
+<hr>
+Data and other attributes inherited from <a href="optparse.html#OptionParser">optparse.OptionParser</a>:<br>
+<dl><dt><strong>standard_option_list</strong> = []</dl>
+
+<hr>
+Methods inherited from <a href="optparse.html#OptionContainer">optparse.OptionContainer</a>:<br>
+<dl><dt><a name="FirstOptionParser-add_option"><strong>add_option</strong></a>(self, *args, **kwargs)</dt><dd><tt><a href="#FirstOptionParser-add_option">add_option</a>(Option)<br>
+<a href="#FirstOptionParser-add_option">add_option</a>(opt_str,&nbsp;...,&nbsp;kwarg=val,&nbsp;...)</tt></dd></dl>
+
+<dl><dt><a name="FirstOptionParser-add_options"><strong>add_options</strong></a>(self, option_list)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-format_description"><strong>format_description</strong></a>(self, formatter)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-get_option"><strong>get_option</strong></a>(self, opt_str)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-has_option"><strong>has_option</strong></a>(self, opt_str)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-remove_option"><strong>remove_option</strong></a>(self, opt_str)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-set_conflict_handler"><strong>set_conflict_handler</strong></a>(self, handler)</dt></dl>
+
+<dl><dt><a name="FirstOptionParser-set_description"><strong>set_description</strong></a>(self, description)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SeenMessagesCache">class <strong>SeenMessagesCache</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Cache&nbsp;for&nbsp;seen&nbsp;message&nbsp;UIDs&nbsp;and&nbsp;Hashes<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="SeenMessagesCache-__init__"><strong>__init__</strong></a>(self)</dt><dd><tt>Constructor</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="lazyMaildir">class <strong>lazyMaildir</strong></a>(<a href="mailbox.html#Maildir">mailbox.Maildir</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Override&nbsp;the&nbsp;_refresh&nbsp;method,&nbsp;based&nbsp;on&nbsp;patch&nbsp;from<br>
+<a href="http://bugs.python.org/issue1607951">http://bugs.python.org/issue1607951</a><br>
+by&nbsp;A.M.&nbsp;Kuchling,&nbsp;2009-05-02<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="imap2maildir.html#lazyMaildir">lazyMaildir</a></dd>
+<dd><a href="mailbox.html#Maildir">mailbox.Maildir</a></dd>
+<dd><a href="mailbox.html#Mailbox">mailbox.Mailbox</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="lazyMaildir-__init__"><strong>__init__</strong></a>(self, dirname, factory<font color="#909090">=&lt;class rfc822.Message&gt;</font>, create<font color="#909090">=True</font>)</dt><dd><tt>Initialize&nbsp;a&nbsp;lazy&nbsp;<a href="mailbox.html#Maildir">Maildir</a>&nbsp;instance.</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="mailbox.html#Maildir">mailbox.Maildir</a>:<br>
+<dl><dt><a name="lazyMaildir-__len__"><strong>__len__</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;count&nbsp;of&nbsp;messages&nbsp;in&nbsp;the&nbsp;mailbox.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-__setitem__"><strong>__setitem__</strong></a>(self, key, message)</dt><dd><tt>Replace&nbsp;the&nbsp;keyed&nbsp;message;&nbsp;raise&nbsp;KeyError&nbsp;if&nbsp;it&nbsp;doesn't&nbsp;exist.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-add"><strong>add</strong></a>(self, message)</dt><dd><tt>Add&nbsp;message&nbsp;and&nbsp;return&nbsp;assigned&nbsp;key.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-add_folder"><strong>add_folder</strong></a>(self, folder)</dt><dd><tt>Create&nbsp;a&nbsp;folder&nbsp;and&nbsp;return&nbsp;a&nbsp;<a href="mailbox.html#Maildir">Maildir</a>&nbsp;instance&nbsp;representing&nbsp;it.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-clean"><strong>clean</strong></a>(self)</dt><dd><tt>Delete&nbsp;old&nbsp;files&nbsp;in&nbsp;"tmp".</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-close"><strong>close</strong></a>(self)</dt><dd><tt>Flush&nbsp;and&nbsp;close&nbsp;the&nbsp;mailbox.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-discard"><strong>discard</strong></a>(self, key)</dt><dd><tt>If&nbsp;the&nbsp;keyed&nbsp;message&nbsp;exists,&nbsp;remove&nbsp;it.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-flush"><strong>flush</strong></a>(self)</dt><dd><tt>Write&nbsp;any&nbsp;pending&nbsp;changes&nbsp;to&nbsp;disk.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-get_file"><strong>get_file</strong></a>(self, key)</dt><dd><tt>Return&nbsp;a&nbsp;file-like&nbsp;representation&nbsp;or&nbsp;raise&nbsp;a&nbsp;KeyError.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-get_folder"><strong>get_folder</strong></a>(self, folder)</dt><dd><tt>Return&nbsp;a&nbsp;<a href="mailbox.html#Maildir">Maildir</a>&nbsp;instance&nbsp;for&nbsp;the&nbsp;named&nbsp;folder.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-get_message"><strong>get_message</strong></a>(self, key)</dt><dd><tt>Return&nbsp;a&nbsp;Message&nbsp;representation&nbsp;or&nbsp;raise&nbsp;a&nbsp;KeyError.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-get_string"><strong>get_string</strong></a>(self, key)</dt><dd><tt>Return&nbsp;a&nbsp;string&nbsp;representation&nbsp;or&nbsp;raise&nbsp;a&nbsp;KeyError.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-has_key"><strong>has_key</strong></a>(self, key)</dt><dd><tt>Return&nbsp;True&nbsp;if&nbsp;the&nbsp;keyed&nbsp;message&nbsp;exists,&nbsp;False&nbsp;otherwise.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-iterkeys"><strong>iterkeys</strong></a>(self)</dt><dd><tt>Return&nbsp;an&nbsp;iterator&nbsp;over&nbsp;keys.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-list_folders"><strong>list_folders</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;folder&nbsp;names.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-lock"><strong>lock</strong></a>(self)</dt><dd><tt>Lock&nbsp;the&nbsp;mailbox.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-next"><strong>next</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;next&nbsp;message&nbsp;in&nbsp;a&nbsp;one-time&nbsp;iteration.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-remove"><strong>remove</strong></a>(self, key)</dt><dd><tt>Remove&nbsp;the&nbsp;keyed&nbsp;message;&nbsp;raise&nbsp;KeyError&nbsp;if&nbsp;it&nbsp;doesn't&nbsp;exist.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-remove_folder"><strong>remove_folder</strong></a>(self, folder)</dt><dd><tt>Delete&nbsp;the&nbsp;named&nbsp;folder,&nbsp;which&nbsp;must&nbsp;be&nbsp;empty.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-unlock"><strong>unlock</strong></a>(self)</dt><dd><tt>Unlock&nbsp;the&nbsp;mailbox&nbsp;if&nbsp;it&nbsp;is&nbsp;locked.</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="mailbox.html#Maildir">mailbox.Maildir</a>:<br>
+<dl><dt><strong>colon</strong> = ':'</dl>
+
+<hr>
+Methods inherited from <a href="mailbox.html#Mailbox">mailbox.Mailbox</a>:<br>
+<dl><dt><a name="lazyMaildir-__contains__"><strong>__contains__</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="lazyMaildir-__delitem__"><strong>__delitem__</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="lazyMaildir-__getitem__"><strong>__getitem__</strong></a>(self, key)</dt><dd><tt>Return&nbsp;the&nbsp;keyed&nbsp;message;&nbsp;raise&nbsp;KeyError&nbsp;if&nbsp;it&nbsp;doesn't&nbsp;exist.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-__iter__"><strong>__iter__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="lazyMaildir-clear"><strong>clear</strong></a>(self)</dt><dd><tt>Delete&nbsp;all&nbsp;messages.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-get"><strong>get</strong></a>(self, key, default<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;keyed&nbsp;message,&nbsp;or&nbsp;default&nbsp;if&nbsp;it&nbsp;doesn't&nbsp;exist.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-items"><strong>items</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;(key,&nbsp;message)&nbsp;tuples.&nbsp;Memory&nbsp;intensive.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-iteritems"><strong>iteritems</strong></a>(self)</dt><dd><tt>Return&nbsp;an&nbsp;iterator&nbsp;over&nbsp;(key,&nbsp;message)&nbsp;tuples.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-itervalues"><strong>itervalues</strong></a>(self)</dt><dd><tt>Return&nbsp;an&nbsp;iterator&nbsp;over&nbsp;all&nbsp;messages.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-keys"><strong>keys</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;keys.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-pop"><strong>pop</strong></a>(self, key, default<font color="#909090">=None</font>)</dt><dd><tt>Delete&nbsp;the&nbsp;keyed&nbsp;message&nbsp;and&nbsp;return&nbsp;it,&nbsp;or&nbsp;default.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-popitem"><strong>popitem</strong></a>(self)</dt><dd><tt>Delete&nbsp;an&nbsp;arbitrary&nbsp;(key,&nbsp;message)&nbsp;pair&nbsp;and&nbsp;return&nbsp;it.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-update"><strong>update</strong></a>(self, arg<font color="#909090">=None</font>)</dt><dd><tt>Change&nbsp;the&nbsp;messages&nbsp;that&nbsp;correspond&nbsp;to&nbsp;certain&nbsp;keys.</tt></dd></dl>
+
+<dl><dt><a name="lazyMaildir-values"><strong>values</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;messages.&nbsp;Memory&nbsp;intensive.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-add_uid_to_hash"><strong>add_uid_to_hash</strong></a>(conn, hash, uid)</dt><dd><tt>Adds&nbsp;a&nbsp;uid&nbsp;to&nbsp;a&nbsp;hash&nbsp;that's&nbsp;missing&nbsp;its&nbsp;uid</tt></dd></dl>
+ <dl><dt><a name="-check_message"><strong>check_message</strong></a>(conn, mbox, hash<font color="#909090">=None</font>, uid<font color="#909090">=None</font>, seencache<font color="#909090">=None</font>)</dt><dd><tt>Checks&nbsp;to&nbsp;see&nbsp;if&nbsp;a&nbsp;given&nbsp;message&nbsp;exists.</tt></dd></dl>
+ <dl><dt><a name="-copy_messages_by_folder"><strong>copy_messages_by_folder</strong></a>(folder, db, imap, mbox, limit<font color="#909090">=0</font>, turbo<font color="#909090">=False</font>, mboxdash<font color="#909090">=False</font>, search<font color="#909090">=None</font>, seencache<font color="#909090">=None</font>)</dt><dd><tt>Copies&nbsp;any&nbsp;messages&nbsp;that&nbsp;haven't&nbsp;yet&nbsp;been&nbsp;seen&nbsp;from&nbsp;imap&nbsp;to&nbsp;mbox.<br>
+&nbsp;<br>
+<a href="#-copy_messages_by_folder">copy_messages_by_folder</a>(folder=simpleimap.SimpleImapSSL().Folder(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db=<a href="#-open_sql_session">open_sql_session</a>(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;imap=simpleimap.SimpleImapSSL(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mbox=open_mailbox_*(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;limit=max&nbsp;number&nbsp;of&nbsp;messages&nbsp;to&nbsp;handle&nbsp;(0&nbsp;=&nbsp;inf),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;turbo=boolean,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mboxdash=use&nbsp;'-'&nbsp;for&nbsp;mbox&nbsp;From&nbsp;line&nbsp;email?,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;search=imap&nbsp;criteria&nbsp;(string),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seencache=an&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;to&nbsp;cache&nbsp;seen&nbsp;messages,<br>
+&nbsp;<br>
+Returns:&nbsp;{'total':&nbsp;total&nbsp;length&nbsp;of&nbsp;folder,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'handled':&nbsp;total&nbsp;messages&nbsp;handled,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'copied':&nbsp;total&nbsp;messages&nbsp;copied,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'copiedbytes':&nbsp;size&nbsp;of&nbsp;total&nbsp;messages&nbsp;copied,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'lastuid':&nbsp;last&nbsp;UID&nbsp;seen}</tt></dd></dl>
+ <dl><dt><a name="-main"><strong>main</strong></a>()</dt><dd><tt>main&nbsp;loop</tt></dd></dl>
+ <dl><dt><a name="-make_hash"><strong>make_hash</strong></a>(size, date, msgid)</dt><dd><tt>Returns&nbsp;a&nbsp;hash&nbsp;of&nbsp;a&nbsp;message&nbsp;given&nbsp;the&nbsp;size,&nbsp;date,&nbsp;and&nbsp;msgid&nbsp;thingies.</tt></dd></dl>
+ <dl><dt><a name="-open_mailbox_maildir"><strong>open_mailbox_maildir</strong></a>(directory, create<font color="#909090">=False</font>)</dt><dd><tt>There&nbsp;is&nbsp;a&nbsp;mailbox&nbsp;here.</tt></dd></dl>
+ <dl><dt><a name="-open_mailbox_mbox"><strong>open_mailbox_mbox</strong></a>(filename, create<font color="#909090">=False</font>)</dt><dd><tt>Open&nbsp;a&nbsp;mbox&nbsp;file,&nbsp;lock&nbsp;for&nbsp;writing</tt></dd></dl>
+ <dl><dt><a name="-open_sql_session"><strong>open_sql_session</strong></a>(filename)</dt><dd><tt>Opens&nbsp;a&nbsp;SQLite&nbsp;database,&nbsp;initializing&nbsp;it&nbsp;if&nbsp;required</tt></dd></dl>
+ <dl><dt><a name="-parse_config_file"><strong>parse_config_file</strong></a>(defaults, configfile<font color="#909090">='imap2maildir.conf'</font>)</dt><dd><tt>Parse&nbsp;config&nbsp;file,&nbsp;if&nbsp;exists.<br>
+Returns&nbsp;a&nbsp;tuple&nbsp;with&nbsp;a&nbsp;ConfigParser&nbsp;instance&nbsp;and&nbsp;either&nbsp;True&nbsp;or<br>
+False,&nbsp;depending&nbsp;on&nbsp;whether&nbsp;the&nbsp;config&nbsp;was&nbsp;read...</tt></dd></dl>
+ <dl><dt><a name="-parse_options"><strong>parse_options</strong></a>(defaults)</dt><dd><tt>First&nbsp;round&nbsp;of&nbsp;command&nbsp;line&nbsp;parsing:&nbsp;look&nbsp;for&nbsp;a&nbsp;-c&nbsp;option.</tt></dd></dl>
+ <dl><dt><a name="-smells_like_maildir"><strong>smells_like_maildir</strong></a>(working_dir)</dt><dd><tt>Quick&nbsp;check&nbsp;for&nbsp;the&nbsp;cur/tmp/new&nbsp;folders</tt></dd></dl>
+ <dl><dt><a name="-store_hash"><strong>store_hash</strong></a>(conn, hash, mailfile, uid)</dt><dd><tt>Given&nbsp;a&nbsp;database&nbsp;connection,&nbsp;hash,&nbsp;mailfile,&nbsp;and&nbsp;uid,<br>
+stashes&nbsp;it&nbsp;in&nbsp;the&nbsp;database</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>console</strong> = &lt;logging.StreamHandler object&gt;<br>
+<strong>defaults</strong> = {'configfile': 'imap2maildir.conf', 'create': False, 'debug': 1, 'hostname': 'imap.gmail.com', 'maxmessages': 0, 'mboxdash': False, 'password': False, 'port': False, 'remotefolder': '[Gmail]/All Mail', 'search': 'SEEN', ...}<br>
+<strong>log</strong> = &lt;logging.Logger object&gt;<br>
+<strong>version</strong> = '%prog 1.10.2 20101018'</td></tr></table>
+</body></html>
