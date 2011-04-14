@@ -192,8 +192,10 @@ def check_message(conn, mbox, hash=None, uid=None, seencache=None):
 
 
 def store_hash(conn, hash, mailfile, uid):
-    # Given a database connection, hash, mailfile, and uid,
-    # stashes it in the database
+    """ Given a database connection, hash, mailfile, and uid,
+    stashes it in the database
+    """
+
     c = conn.cursor()
     # nuke it if it's already there.  (can happen if disk file goes away)
     cur = c.execute('delete from seenmessages where hash = ?', (hash, ))
