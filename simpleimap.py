@@ -84,7 +84,7 @@ class __simplebase:
         outerdict = self.__listdictor(result)
         replydict = {}
 
-        for i in outerdict.keys():
+        for i in list(outerdict.keys()):
             replydict[i] = self.__listdictor(outerdict[i])
 
         return replydict
@@ -95,7 +95,7 @@ class __simplebase:
 
         outdict = {}
 
-        for i in xrange(0,len(inlist),2):
+        for i in range(0,len(inlist),2):
             outdict[inlist[i]] = inlist[i+1]
 
         return outdict
@@ -324,7 +324,7 @@ class __simplebase:
         if data[0]:
             # Grab a list of things in the FETCH response.
             fetchresult = self.parseFetch(data[0])
-            contents = fetchresult[fetchresult.keys()[0]]
+            contents = fetchresult[list(fetchresult.keys())[0]]
 
             uid = contents['UID']
             date = contents['INTERNALDATE']
