@@ -17,7 +17,11 @@ PEP-0008 compliance
 
 version = "%prog 1.10.2 20101018"
 
-import ConfigParser
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
+
 import email
 import getpass
 import hashlib
@@ -251,7 +255,7 @@ def parse_config_file(defaults,configfile='imap2maildir.conf'):
     False, depending on whether the config was read...
     """
 
-    config = ConfigParser.ConfigParser(defaults)
+    config = ConfigParser(defaults)
     if config.read(configfile):
         log.debug('Reading config from ' + configfile)
         return (config, True)
@@ -295,7 +299,7 @@ class FirstOptionParser(optparse.OptionParser):
             except optparse.BadOptionError:
                 # Just a bad option, let's try this again
                 pass
-            except (optparse.OptionValueError), err:
+            except (optparse.OptionValueError) as err:
                 self.error(str(err))
 
         args = largs + rargs
@@ -479,7 +483,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
                             time.asctime(imap.parseInternalDate(i['date']))))
             msgfile = mbox.add(message)
             store_hash(db, msghash, msgfile, i['uid'])
-            log.debug(' NEW: ' + `i`)
+            log.debug(' NEW: ' + repr(i))
             outdict['copied'] += 1
             outdict['copiedbytes'] += i['size']
         elif not check_message(db, mbox, uid=i['uid'], seencache=seencache):
