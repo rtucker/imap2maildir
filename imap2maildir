@@ -30,7 +30,12 @@ import mailbox
 import optparse
 import os
 import re
-import rfc822
+
+try:
+    import rfc822
+except ImportError:
+    import rfc822py3 as rfc822
+
 import simpleimap
 import sqlite3
 import sys
