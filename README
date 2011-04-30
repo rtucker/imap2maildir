@@ -51,6 +51,13 @@ COMMAND LINE EXAMPLES
  $ imap2maildir -c something.conf -m 5000
    Uses the something.conf configuration, but overrides maxmessages to 5000.
 
+COMMON ISSUES
+ 1. Google Mail users in the United Kingdom receive the following:
+    Exception: ['[NONEXISTENT] Unknown Mailbox: [Gmail]/All Mail (Failure)']
+
+    Workaround:  Add --remote-folder="[Google Mail]/All Mail"
+    Why: http://en.wikipedia.org/wiki/Gmail#Trademark_disputes
+
 PROBLEMS/COMPLAINTS/SUGGESTIONS
 Please use the github issue tracker at:
 https://github.com/rtucker/imap2maildir/issues
