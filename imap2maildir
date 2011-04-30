@@ -332,7 +332,7 @@ def parse_options(defaults):
     description += "alternative to fetchmail.  Supports mbox and maildir, "
     description += "despite the name. "
     description += "See COPYRIGHT for your rights; "
-    description += "http://github.com/rtucker/imap2maildir/ for info."
+    description += "https://github.com/rtucker/imap2maildir/ for info."
     if gotconfig:
         description = description + '\n\nConfiguration defaults read from \
             file "%s"' % firstoptions.configfile
