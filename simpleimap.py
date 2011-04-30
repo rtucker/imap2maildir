@@ -168,7 +168,7 @@ class __simplebase:
         self.select(folder)
         status, data = self.search(charset, search)
         if status != 'OK':
-            raise Exception(data)
+            raise Exception('search %s: %s' % (search, data[0]))
 
         return data[0].split()
 
@@ -179,7 +179,7 @@ class __simplebase:
         self.select(folder)
         status, data = self.uid('SEARCH', charset, search)
         if status != 'OK':
-            raise Exception(data)
+            raise Exception('search %s: %s' % (search, data[0]))
 
         return data[0].split()
 
@@ -204,7 +204,7 @@ class __simplebase:
         status, data = self.fetch(int(id), '(RFC822)')
 
         if status != 'OK':
-            raise Exception(data)
+            raise Exception('id %s: %s' % (uid, data[0]))
 
         return email.message_from_string(data[0][1])
 
@@ -222,7 +222,7 @@ class __simplebase:
         status, data = self.uid('FETCH', uid, '(RFC822)')
 
         if status != 'OK':
-            raise Exception(data)
+            raise Exception('uid %s: %s' % (uid, data[0]))
 
         return email.message_from_string(data[0][1])
 
@@ -264,7 +264,7 @@ class __simplebase:
         status, data = self.fetch(int(id), '(UID)')
 
         if status != 'OK':
-            raise Exception(data)
+            raise Exception('id %s: %s' % (id, data[0]))
 
         if data[0]:
             uidrg = re.compile('.*?UID\\s+(\\d+)',re.IGNORECASE|re.DOTALL)
@@ -369,7 +369,7 @@ class FolderClass:
 
         status, data = self.__parent.select(self.__folder)
         if status != 'OK':
-            raise Exception(data)
+            raise Exception('folder %s: %s' % (self.__folder, data[0]))
 
         return int(data[0])
 
