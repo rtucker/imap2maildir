@@ -90,7 +90,7 @@ class lazyMaildir(mailbox.Maildir):
         new_mtime = os.path.getmtime(os.path.join(self._path, 'new'))
         cur_mtime = os.path.getmtime(os.path.join(self._path, 'cur'))
 
-        if (self._last_read is not None and 
+        if (self._last_read is not None and
             new_mtime <= self._last_read and cur_mtime <= self._last_read):
             return
 
@@ -106,10 +106,10 @@ class lazyMaildir(mailbox.Maildir):
                     continue
                 uniq = entry.split(self.colon)[0]
                 self._toc[uniq] = os.path.join(subdir, entry)
-                
+
         update_dir('new')
         update_dir('cur')
- 
+
         # We record the current time - 1sec so that, if _refresh() is called
         # again in the same second, we will always re-read the mailbox
         # just in case it's been modified.  (os.path.mtime() only has
@@ -169,7 +169,7 @@ def check_message(conn, mbox, hash=None, uid=None, seencache=None):
             for result in c:
                 seencache.uids[str(result[0])] = result[1]
             log.debug("Uid cache: %i uids" % len(seencache.uids))
- 
+
     if hash:
         if str(hash) in seencache.hashes:
             mailfile = seencache.hashes[hash]
@@ -274,7 +274,7 @@ class FirstOptionParser(optparse.OptionParser):
     options that don't exist.
     Lifted lock, stock, and barrel from /usr/lib/python2.6/optparse.py
     """
-    
+
     def parse_args(self, args=None, values=None):
         """
         parse_args(args : [string] = sys.argv[1:],
@@ -319,7 +319,7 @@ def parse_options(defaults):
     firstparser.set_defaults(configfile=defaults['configfile'])
     firstparser.add_option("-c", "--config-file", dest="configfile")
     (firstoptions, firstargs) = firstparser.parse_args()
-    
+
     # Parse a config file
     (parsedconfig, gotconfig) = parse_config_file(
         defaults, configfile=firstoptions.configfile)
@@ -520,7 +520,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
 def main():
     """ main loop
     """
-    
+
     log.debug('Hello.  Version %s' % version)
     # Parse the command line and config file
     options = parse_options(defaults)

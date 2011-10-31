@@ -27,7 +27,7 @@ Options:
     -r FOLDERNAME, --remote-folder=FOLDERNAME
                         Remote IMAP folder.  Default: [Gmail]/All Mail
     -s CRITERIA, --search=CRITERIA
-                        IMAP4 search criteria to use.  Default: SEEN 
+                        IMAP4 search criteria to use.  Default: SEEN
     --create            If --destination doesn't exist, create it
     -T, --no-turbo      Check for message locally before asking IMAP.
                         Default: True
