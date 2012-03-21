@@ -58,6 +58,23 @@ COMMON ISSUES
     Workaround:  Add --remote-folder="[Google Mail]/All Mail"
     Why: http://en.wikipedia.org/wiki/Gmail#Trademark_disputes
 
+ 2. When a message is deleted from the server, it isn't deleted from
+    imap2maildir's local store.
+
+    My response, to someone who asked about this:
+        It's pretty much intentional.  The original intent of the script was
+        to automatically back up mail stored on a server, so it doesn't check
+        for deleted messages -- if a message is missing from the server, an
+        unattended delete of the local copy would be bad!
+
+        There are certainly scenarios where local deletes would be good.  In
+        fact, yours is probably one of them.  :-)  At first glance, it would
+        involve iterating through all local messages and asking the server if
+        they exist, but there might be an easier way.  (It's been awhile since
+        I've thought about IMAP.)
+
+    (Patches welcome.  :-)
+
 PROBLEMS/COMPLAINTS/SUGGESTIONS
 Please use the github issue tracker at:
 https://github.com/rtucker/imap2maildir/issues
