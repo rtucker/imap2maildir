@@ -177,13 +177,13 @@ def check_message(conn, mbox, hash=None, uid=None, seencache=None):
             c.execute('select mailfile from seenmessages where hash=?', (hash,))
             row = c.fetchone()
             if row:
-                log.debug("Cache miss on hash %s" % hash)
+                log.debug("Cache miss on hash %s", hash)
                 mailfile = row[0]
             else:
                 return False
     elif uid:
         if str(uid) in seencache.uids:
-            mailfile = seencache.uids[uid]
+            mailfile = seencache.uids[str(uid)]
         else:
             c.execute('select mailfile from seenmessages where uid=?', (uid,))
             row = c.fetchone()
@@ -195,7 +195,13 @@ def check_message(conn, mbox, hash=None, uid=None, seencache=None):
     else:
         return False
 
-    if isinstance(mbox, mailbox.mbox):
+    if str(mailfile).startswith('POISON-'):
+        # This is a fake poison filename!  Assume truth.
+        log.warning("Poison filename detected; assuming the message "
+                       "exists and all is well: %s :: %s",
+                       hash or uid, mailfile)
+        return True
+    elif isinstance(mbox, mailbox.mbox):
         # mailfile will be an int
         return int(mailfile) in mbox
     elif isinstance(mbox, lazyMaildir):
@@ -466,7 +472,7 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
         # use this to check the local cache for the message before hitting
         # the outside world.  (TODO: Make this less suckful.)
         log.debug('TURBO MODE ENGAGED!')
-        folder.__turbo__(lambda uid: check_message(db, mbox, uid=uid, seencache=seencache))
+        folder.__turbo__(lambda uid: check_message(db, mbox, uid=str(uid), seencache=seencache))
     else:
         log.debug('Not using turbo mode...')
         folder.__turbo__(None)
@@ -479,7 +485,17 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
 
         if not check_message(db, mbox, hash=msghash, seencache=seencache):
             # Hash not found, copy it.
-            message = imap.get_message_by_uid(i['uid'])
+            try:
+                message = imap.get_message_by_uid(i['uid'])
+            except Exception:
+                log.exception('ERROR: Could not retrieve message: %s' % repr(i))
+                if outdict['handled'] < 1:
+                    log.error("Adding message hash %s to seencache, to avoid "
+                              "future problems...", msghash)
+                    store_hash(db, msghash, 'POISON-%s' % msghash, i['uid'])
+                    add_uid_to_hash(db, msghash, i['uid'])
+                break
+
             if mboxdash:
                 envfrom = '-'
             else:
@@ -491,12 +507,12 @@ def copy_messages_by_folder(folder, db, imap, mbox, limit=0, turbo=False,
             log.debug(' NEW: ' + repr(i))
             outdict['copied'] += 1
             outdict['copiedbytes'] += i['size']
-        elif not check_message(db, mbox, uid=i['uid'], seencache=seencache):
+        elif not check_message(db, mbox, uid=str(i['uid']), seencache=seencache):
             # UID is missing in the database (old version needs updated)
-            log.debug('Adding uid %i to msghash %s' % (i['uid'], msghash))
+            log.debug('Adding uid %i to msghash %s', i['uid'], msghash)
             add_uid_to_hash(db, msghash, i['uid'])
         else:
-            log.debug('Unexpected turbo mode on uid %i' % i['uid'])
+            log.debug('Unexpected turbo mode on uid %i', i['uid'])
 
         # Update our counters.
         outdict['handled'] += 1
@@ -564,7 +580,7 @@ def main():
         db.rollback()
         raise
     except:
-        log.warning('Exception!  Clearing locks and safing database.')
+        log.exception('Exception!  Clearing locks and safing database.')
         mbox.unlock()
         db.rollback()
         raise

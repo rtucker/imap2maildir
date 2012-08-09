@@ -293,13 +293,8 @@ class __simplebase:
         """
 
         # Retrieve the message from the server.
-        try:
-            status, data = self.uid('FETCH', uid,
-                              '(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
-        except:
-            logging.error("Caught exception in get_summary_by_uid")
-            logging.error("UID: %s" % uid)
-            raise
+        status, data = self.uid('FETCH', uid,
+                          '(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
 
         if status != 'OK':
             return None
@@ -418,9 +413,13 @@ class FolderClass:
             self.__parent.select(self.__folder)
             for u in self.Uids(search=search):
                 if not self.__turbo(u):
-                    summ = self.__parent.get_summary_by_uid(u)
-                    if summ:
-                        yield summ
+                    try:
+                        summ = self.__parent.get_summary_by_uid(u)
+                        if summ:
+                            yield summ
+                    except Exception:
+                        logging.exception("Couldn't retrieve uid %s", u)
+                        continue
                 else:
                     # long hangtimes can suck
                     self.__keepaliver()
