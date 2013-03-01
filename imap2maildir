@@ -545,16 +545,6 @@ def main():
     if options.type not in ['maildir', 'mbox']:
         raise ValueError("No valid mailbox type specified")
 
-    # Connect to IMAP server
-    imapserver = simpleimap.Server(hostname=options.hostname,
-                   username=options.username, password=options.password,
-                   port=options.port, ssl=options.ssl)
-    imap = imapserver.Get()
-
-    # Instantiate a folder
-    folder = imap.Folder(folder=options.remotefolder)
-    folder.__keepaliver__(imapserver.Keepalive)
-
     # Open mailbox and database, and copy messages
     try:
         if options.type == 'maildir':
@@ -565,6 +555,17 @@ def main():
             db = open_sql_session(options.destination + '.sqlite')
 
         seencache = SeenMessagesCache()
+
+        # Connect to IMAP server
+        imapserver = simpleimap.Server(hostname=options.hostname,
+                       username=options.username, password=options.password,
+                       port=options.port, ssl=options.ssl)
+        imap = imapserver.Get()
+
+        # Instantiate a folder
+        folder = imap.Folder(folder=options.remotefolder)
+        folder.__keepaliver__(imapserver.Keepalive)
+
         result = copy_messages_by_folder(folder=folder,
                                          db=db,
                                          imap=imap,
