@@ -165,7 +165,7 @@ class __simplebase:
         """ get ids by folder
         """
 
-        self.select(folder)
+        self.select(folder, readonly=True)
         status, data = self.search(charset, search)
         if status != 'OK':
             raise Exception('search %s: %s' % (search, data[0]))
@@ -176,7 +176,7 @@ class __simplebase:
         """ get_uids by folders
         """
 
-        self.select(folder)
+        self.select(folder, readonly=True)
         status, data = self.uid('SEARCH', charset, search)
         if status != 'OK':
             raise Exception('search %s: %s' % (search, data[0]))
@@ -362,7 +362,7 @@ class FolderClass:
         """ __len__
         """
 
-        status, data = self.__parent.select(self.__folder)
+        status, data = self.__parent.select(self.__folder, readonly=True)
         if status != 'OK':
             raise Exception('folder %s: %s' % (self.__folder, data[0]))
 
@@ -410,7 +410,7 @@ class FolderClass:
         """
 
         if self.__turbo:
-            self.__parent.select(self.__folder)
+            self.__parent.select(self.__folder, readonly=True)
             for u in self.Uids(search=search):
                 if not self.__turbo(u):
                     try:
