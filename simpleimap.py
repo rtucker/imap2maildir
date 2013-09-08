@@ -22,7 +22,7 @@ class __simplebase:
         imaplib2 sexp.py: http://code.google.com/p/webpymail/
         """
 
-        literal_re = re.compile(r'^{(\d+)}\r\n')
+        literal_re = re.compile(r'^{(\d+)} ')
         simple_re = re.compile(r'^([^ ()]+)')
         quoted_re = re.compile(r'^"((?:[^"\\]|(?:\\\\)|\\"|\\)*)"')
 
@@ -316,14 +316,22 @@ class __simplebase:
 
         uid = date = envdate = envfrom = msgid = size = None
 
+        for idx, val in enumerate(data):
+            if isinstance(val, tuple):
+                # This seems to happen if there are newlines in the Subject?!
+                data[idx] = ' '.join(list(val))
+
         if data[0]:
+            combined_data = ' '.join(data)
+
             # Grab a list of things in the FETCH response.
-            fetchresult = self.parseFetch(data[0])
+            fetchresult = self.parseFetch(combined_data)
             contents = fetchresult[list(fetchresult.keys())[0]]
 
             uid = contents['UID']
             date = contents['INTERNALDATE']
             envdate = contents['ENVELOPE'][0]
+
             if contents['ENVELOPE'][2][0][2] and contents['ENVELOPE'][2][0][3]:
                 envfrom = '@'.join(contents['ENVELOPE'][2][0][2:])
             else:

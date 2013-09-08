@@ -6,6 +6,7 @@
 import simpleimap
 import unittest
 
+
 class TestParseSummaryData(unittest.TestCase):
     """ Test Parse Summary Data
     """
@@ -92,10 +93,28 @@ class TestParseSummaryData(unittest.TestCase):
         keys = sorted(result.keys())
 
         self.assertEqual(validkeys, keys, "wrong keys in result")
-        
+
+        for i in validkeys:
+            self.assertEqual(validresult[i], result[i], "mismatch on %s" % i)
+
+    def testWeirdBrokenMessage20130827(self):
+        """
+        Test a message that broke something at some point...
+        >>> imap.uid('FETCH', 447638, '(UID ENVELOPE RFC822.SIZE INTERNALDATE)')
+        """
+        status, data = ('OK', [('401015 (UID 447638 RFC822.SIZE 6454 INTERNALDATE "27-Aug-2013 21:45:16 +0000" ENVELOPE ("Tue, 27 Aug 2013 15:59:36 -0600" {57}', '\n\n\n\t\taaaaaaaa bbbbbbbbbb cccc dddddd eeeeeeeeee ffffffff\n'), ' (("gggggggg" NIL "hhhhhhhh" "iiiiiiii.jjj")) (("gggggggg" NIL "hhhhhhhh" "iiiiiiii.jjj")) (("gggggggg" NIL "hhhhhhhh" "iiiiiiii.jjj")) ((NIL NIL "kkkk" "llllllll.mmm")) NIL NIL NIL "<1377640776.521d214820a42@nnnnn.ooooooooo>"))'])
+
+        validresult = {'uid': 447638, 'envfrom': 'hhhhhhhh@iiiiiiii.jjj', 'msgid': '<1377640776.521d214820a42@nnnnn.ooooooooo>', 'envdate': 'Tue, 27 Aug 2013 15:59:36 -0600', 'date': '27-Aug-2013 21:45:16 +0000', 'size': 6454}
+
+        result = self.imap.parse_summary_data(data)
+
+        validkeys = sorted(validresult.keys())
+        keys = sorted(result.keys())
+
+        self.assertEqual(validkeys, keys, "wrong keys in result")
+
         for i in validkeys:
             self.assertEqual(validresult[i], result[i], "mismatch on %s" % i)
 
 if __name__ == '__main__':
     unittest.main()
-
