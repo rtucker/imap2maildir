@@ -332,12 +332,19 @@ class __simplebase:
             date = contents['INTERNALDATE']
             envdate = contents['ENVELOPE'][0]
 
-            if contents['ENVELOPE'][2][0][2] and contents['ENVELOPE'][2][0][3]:
-                envfrom = '@'.join(contents['ENVELOPE'][2][0][2:])
+            envelope = contents['ENVELOPE']
+
+            if (envelope
+                and envelope[2]
+                and envelope[2][0]
+                and envelope[2][0][2]
+                and envelope[2][0][3]
+                ):
+                envfrom = '@'.join(envelope[2][0][2:])
             else:
                 # No From: header.  Woaaah.
                 envfrom = 'MAILER-DAEMON'
-            msgid = contents['ENVELOPE'][9]
+            msgid = envelope[9]
             size = int(contents['RFC822.SIZE'])
 
         if msgid or size or date:
