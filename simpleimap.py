@@ -301,6 +301,14 @@ class __simplebase:
 
         return self.parse_summary_data(data)
 
+    def set_seen_by_uid(self, uid):
+        """Applies the SEEN flag to a message."""
+        status, data = self.uid('STORE', uid, '+FLAGS', '(\\Seen)')
+        if status != 'OK':
+            raise Exception('set_seen_by_uid %s: %s' % (uid, data[0]))
+
+        return data[0]
+
     def parse_summary_data(self, data):
         """Takes the data result (second parameter) of a self.uid or
         self.fetch for (UID ENVELOPE RFC822.SIZE INTERNALDATE) and returns
