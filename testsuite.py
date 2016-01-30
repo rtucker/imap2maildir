@@ -16,6 +16,12 @@ class TestParseSummaryData(unittest.TestCase):
         """
         self.imap = simpleimap.SimpleImapSSL('imap.gmail.com')
 
+    def testDateExchange(self):
+        """
+        Tests parsing a date from some Exchange server (1 digit day).
+        """
+        self.assertTrue(self.imap.parseInternalDate('1-Jul-2015 17:30:49 +0200'))
+
     def testEmbeddedSubjectQuotes(self):
         """
         Tests a message with embedded double quotes in the Subject.
