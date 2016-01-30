@@ -425,6 +425,7 @@ class FolderClass:
         """ Messsages
         """
 
+        self.__parent.select(self.__folder, readonly=True)
         for m in self.__parent.get_messages_by_folder(self.__folder, self.__charset, search):
             yield m
 
@@ -454,6 +455,8 @@ class FolderClass:
     def Ids(self, search='ALL'):
         """ Ids
         """
+
+        self.__parent.select(self.__folder, readonly=True)
         for i in self.__parent.get_ids_by_folder(self.__folder, self.__charset, search):
             yield i
 
@@ -461,6 +464,7 @@ class FolderClass:
         """ Uids
         """
 
+        self.__parent.select(self.__folder, readonly=True)
         for u in self.__parent.get_uids_by_folder(self.__folder, self.__charset, search):
             yield u
 
