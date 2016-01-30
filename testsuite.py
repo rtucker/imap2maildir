@@ -20,7 +20,11 @@ class TestParseSummaryData(unittest.TestCase):
         """
         Tests parsing a date from some Exchange server (1 digit day).
         """
-        self.assertTrue(self.imap.parseInternalDate('1-Jul-2015 17:30:49 +0200'))
+        import time
+
+        parsedtime = self.imap.parseInternalDate('1-Jul-2015 17:30:49 +0200')
+        validtime = time.localtime(time.mktime((2015, 7, 1, 11, 30, 49, -1, -1, -1)))
+        self.assertEqual(parsedtime, validtime)
 
     def testEmbeddedSubjectQuotes(self):
         """
