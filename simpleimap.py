@@ -118,7 +118,8 @@ class __simplebase:
 
         mo = InternalDate.match(resp)
         if not mo:
-            return None
+            # try email date format (returns None on failure)
+            return email.utils.parsedate(resp)
 
         mon = Mon2num[mo.group('mon')]
         zonen = mo.group('zonen')
@@ -337,8 +338,11 @@ class __simplebase:
             contents = fetchresult[list(fetchresult.keys())[0]]
 
             uid = contents['UID']
-            date = contents['INTERNALDATE']
             envdate = contents['ENVELOPE'][0]
+            if 'INTERNALDATE' in contents:
+                date = contents['INTERNALDATE']
+            else:
+                date = envdate
 
             envelope = contents['ENVELOPE']
 
