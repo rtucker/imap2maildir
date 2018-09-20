@@ -136,13 +136,19 @@ def open_sql_session(filename):
     # gather info about the seenmessages table
     c.execute('pragma table_info(seenmessages)')
     columns = ' '.join(i[1] for i in c.fetchall()).split()
+
     if columns == []:
         # need to create the seenmessages table
         c.execute("""create table seenmessages
-            (hash text not null unique, mailfile text not null, uid integer)""")
-    elif not 'uid' in columns:
-        # old db; need to add a column for uid
-        c.execute("""alter table seenmessages add column uid integer""")
+            (hash text not null unique, mailfile text not null, uid integer, folder text)""")
+    else:
+        if not 'uid' in columns:
+            # old db; need to add a column for uid
+            c.execute("""alter table seenmessages add column uid integer""")
+        if not 'folder' in columns:
+            # need to add a column for folder
+            c.execute("""alter table seenmessages add column folder text""")
+
     conn.commit()
     return conn
 
@@ -157,39 +163,39 @@ def check_message(conn, mbox, hash=None, uid=None, seencache=None):
             # Populate the hash cache
             log.debug("Populating hash cache...")
             seencache.hashes = {}
-            c.execute('select hash,mailfile from seenmessages')
+            c.execute('select hash,folder,mailfile from seenmessages')
             for result in c:
-                seencache.hashes[str(result[0])] = result[1]
+                seencache.hashes[str(result[0])] = (result[1], result[2])
             log.debug("Hash cache: %i hashes" % len(seencache.hashes))
         if seencache.uids is None:
             # Populate the uid cache
             log.debug("Populating uid cache...")
             seencache.uids = {}
-            c.execute('select uid,mailfile from seenmessages')
+            c.execute('select uid,folder,mailfile from seenmessages')
             for result in c:
-                seencache.uids[str(result[0])] = result[1]
+                seencache.uids[str(result[0])] = (result[1], result[2])
             log.debug("Uid cache: %i uids" % len(seencache.uids))
 
     if hash:
         if str(hash) in seencache.hashes:
-            mailfile = seencache.hashes[hash]
+            folder, mailfile = seencache.hashes[hash]
         else:
-            c.execute('select mailfile from seenmessages where hash=?', (hash,))
+            c.execute('select folder,mailfile from seenmessages where hash=?', (hash,))
             row = c.fetchone()
             if row:
                 log.debug("Cache miss on hash %s", hash)
-                mailfile = row[0]
+                folder, mailfile = row
             else:
                 return False
     elif uid:
         if str(uid) in seencache.uids:
-            mailfile = seencache.uids[str(uid)]
+            folder, mailfile = seencache.uids[str(uid)]
         else:
-            c.execute('select mailfile from seenmessages where uid=?', (uid,))
+            c.execute('select folder,mailfile from seenmessages where uid=?', (uid,))
             row = c.fetchone()
             if row:
                 log.debug("Cache miss on uid %s" % uid)
-                mailfile = row[0]
+                folder, mailfile = row
             else:
                 return False
     else:
@@ -206,6 +212,9 @@ def check_message(conn, mbox, hash=None, uid=None, seencache=None):
         return int(mailfile) in mbox
     elif isinstance(mbox, lazyMaildir):
         # mailfile will be a string; use mbox.get because it is faster
+        if folder:
+            fmbox = mbox.get_folder(folder)
+            return fmbox.get(mailfile)
         return mbox.get(mailfile)
     else:
         # uhh let's wing it
@@ -222,7 +231,7 @@ def store_hash(conn, hash, mailfile, uid):
     cur = c.execute('delete from seenmessages where hash = ?', (hash, ))
     if cur.rowcount > 0:
         log.debug('!!! Nuked duplicate hash %s' % hash)
-    c.execute('insert into seenmessages values (?,?,?)', (hash, mailfile, uid))
+    c.execute('insert into seenmessages values (?,?,?,?)', (hash, mailfile, uid, ''))
     conn.commit()
 
 
