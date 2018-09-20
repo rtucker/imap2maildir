@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Mirrors the contents of an IMAP4 mailbox into a local maildir or mbox.
 Intended for keeping a local backup of a remote IMAP4 mailbox to protect
